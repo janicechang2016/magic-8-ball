@@ -199,7 +199,7 @@ function drawIdle(){
 // 5c. answer plate (marker-sticker reveal)
 const ans=canvasTex(768,()=>{});
 const ansMat=new THREE.MeshBasicMaterial({map:ans.tex,transparent:true,opacity:0,depthWrite:false});
-const ansPlane=new THREE.Mesh(new THREE.PlaneGeometry(0.82,0.82),ansMat); ansPlane.position.z=0.025; eye.add(ansPlane);
+const ansPlane=new THREE.Mesh(new THREE.PlaneGeometry(0.41,0.41),ansMat); ansPlane.position.z=0.025; eye.add(ansPlane);
 function wrap(t,m){const w=t.split(' ');let L=[],l='';for(const x of w){if((l+' '+x).trim().length>m){L.push(l.trim());l=x;}else l+=' '+x;}if(l.trim())L.push(l.trim());return L;}
 function drawAnswer(text,blur){
   const ctx=ans.ctx,s=768; ctx.clearRect(0,0,s,s);
@@ -289,7 +289,7 @@ function loop(now){
 
   let pop=1;
   if(state===S.IDLE){
-    orb.position.y=Math.sin(t*1.0)*0.04; orb.rotation.y+=0.0015; orb.rotation.x=Math.sin(t*0.5)*0.03;
+    orb.position.y=Math.sin(t*1.0)*0.04;
     orb.scale.setScalar(1+Math.sin(t*1.5)*0.018);
     idleMat.opacity = asked?0:Math.min(idleMat.opacity+0.04,1);
   }
