@@ -268,7 +268,7 @@
   <div id="scene"></div>
 
   <!-- answer "window" — HTML overlay on top of the orb -->
-  <div id="answer-overlay" class="idle pre-first" aria-hidden="true">
+  <div id="answer-overlay" class="idle" aria-hidden="true">
     <span class="eight">8</span>
     <div class="tri"><span class="ans"></span></div>
   </div>
@@ -449,7 +449,6 @@ function loop(now){
       orb.rotation.y = -2*Math.PI*(1 - p*(2-p));
       orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.09 * d;
       orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.07 * d;
-      if(p>0.45 && overlay.classList.contains('pre-first')) overlay.classList.remove('pre-first');
     } else {
       orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.18 * d;
       orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.13 * d;
