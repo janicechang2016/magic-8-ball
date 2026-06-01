@@ -65,9 +65,9 @@
     padding:clamp(10px,2.2vmin,22px);
     font-family:'Permanent Marker',cursive;color:#0a0a0a;
     perspective:800px;
-    transition:background 500ms ease, box-shadow 500ms ease, opacity 600ms ease;
+    backface-visibility:hidden;
+    transition:background 500ms ease, box-shadow 500ms ease;
   }
-  #answer-overlay.pre-first{opacity:0;}
   #answer-overlay.waking,
   #answer-overlay.answering{
     background:radial-gradient(circle at 50% 32%, #0a1340 0%, #050a26 75%, #02041a 100%);
@@ -400,20 +400,15 @@ for(let i=0;i<18;i++){
 
 // ---- 7. STATE MACHINE --------------------------------------
 const S={IDLE:0,WAKING:1,REVEAL:2}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
-const WAKE_MS=1200, FIRST_WAKE_MS=1900, REVEAL_MS=3800; const hint=document.getElementById('hint');
+const WAKE_MS=1500, REVEAL_MS=3800; const hint=document.getElementById('hint');
 const REVEAL_BASE_DELAY_MS=620;
-let firstShake=true;
 let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING) return;
   state=S.WAKING; t0=performance.now(); asked=true;
   pending=ANSWERS[Math.floor(Math.random()*ANSWERS.length)];
   spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
-  spin.first=firstShake; firstShake=false;
-  // first shake: keep overlay in .idle so the white "8" window fades in
-  // mid-spin (the ball "turns around to its answer side"). Subsequent shakes
-  // go straight to the dark navy waking state.
-  if(!spin.first) setOverlay('waking');
+  setOverlay('waking');
   hint.textContent=WAKE_LINES[Math.floor(Math.random()*WAKE_LINES.length)];
   if(navigator.vibrate) navigator.vibrate(30);
 }
@@ -442,21 +437,16 @@ function loop(now){
     orb.scale.setScalar(1+Math.sin(t*1.5)*0.018);
   }
   else if(state===S.WAKING){
-    const wakeMs = spin.first ? FIRST_WAKE_MS : WAKE_MS;
-    const p=(now-t0)/wakeMs, d=1-p, ts=now*0.001, f=4.5;
-    if(spin.first){
-      // dramatic "turn around to the answer side": one full Y rotation, ease-out
-      orb.rotation.y = -2*Math.PI*(1 - p*(2-p));
-      orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.09 * d;
-      orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.07 * d;
-    } else {
-      orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.18 * d;
-      orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.13 * d;
-      orb.rotation.x = Math.sin(ts*f*3.14 + spin.x) * 0.22 * d;
-      orb.rotation.y = Math.sin(ts*f*3.14*0.9 + spin.y) * 0.22 * d;
-    }
+    const p=(now-t0)/WAKE_MS, d=1-p, ts=now*0.001;
+    // turn over: single full X-axis tumble forward, ease-out so it settles
+    const rotP = 1 - Math.pow(1-p, 2.6);
+    orb.rotation.x = -2*Math.PI*rotP;
+    // subtle organic rock so it doesn't read mechanical
+    orb.position.x = Math.sin(ts*7.5 + spin.x*3.14) * 0.045 * d;
+    orb.position.y = Math.cos(ts*6.8 + spin.y*3.14) * 0.055 * d;
     const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
-    overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px))`;
+    const rotXdeg = orb.rotation.x * 180 / Math.PI;
+    overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
     if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.REVEAL;t0=now;showAnswerHTML(pending);}
   }
   else if(state===S.REVEAL){
