@@ -18,7 +18,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Permanent+Marker&family=Fredoka:wght@500;600;700&family=Bodoni+Moda:ital,wght@0,700;0,900;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Permanent+Marker&family=Fredoka:wght@500;600;700&family=Bodoni+Moda:ital,wght@0,700;0,900;1,400&family=DM+Serif+Display:ital@0;1&family=Pinyon+Script&display=swap" rel="stylesheet">
 <style>
   :root{
     --bubble:#ff5fa6;
@@ -115,7 +115,13 @@
 
   /* ===== bottom UI ===== */
   #ui{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;flex-direction:column;align-items:center;gap:13px;padding:0 24px calc(30px + env(safe-area-inset-bottom));pointer-events:none;}
-  #hint{font-family:'Permanent Marker',cursive;font-size:15px;color:var(--mag-red);text-shadow:1px 1px 0 rgba(60,20,10,.18);min-height:1.1em;letter-spacing:.02em;transition:opacity .35s ease;}
+  #hint{
+    font-family:'Permanent Marker',cursive;font-size:16px;color:var(--mag-red);
+    background:#fff6d8;padding:7px 16px;border-radius:3px;
+    box-shadow:0 4px 10px rgba(60,20,10,.4),0 1px 0 rgba(0,0,0,.12);
+    transform:rotate(-1.5deg);max-width:90vw;text-align:center;line-height:1.2;
+    letter-spacing:.02em;transition:opacity .35s ease;
+  }
   .btn{pointer-events:auto;cursor:pointer;font-family:'Fredoka',sans-serif;font-weight:700;letter-spacing:.04em;color:#fff;border:3px solid #fff;border-radius:999px;transition:transform .14s ease, box-shadow .2s ease;}
   .btn:active{transform:scale(.93) rotate(-1deg);}
   #shake{
@@ -210,7 +216,7 @@ const ANSWERS = [
   "ask again","fuck around and find out","do you enjoy being a clown?",
   "feminism died today","greyrock his ass girl"
 ];
-const WAKE_LINES = ["consulting my extremely worn thin patience","fuck his ass up","remember, forgive but never forget :)"];
+const WAKE_LINES = ["consulting my extremely worn thin patience"];
 
 // ---- 2. SCENE ----------------------------------------------
 const mount=document.getElementById('scene');
@@ -231,8 +237,8 @@ const p3=new THREE.PointLight(0xff1f8f,1.2,20); p3.position.set(0,2,-3); scene.a
 const orb=new THREE.Group(); scene.add(orb);
 orb.add(new THREE.Mesh(
   new THREE.SphereGeometry(1,72,72),
-  new THREE.MeshPhysicalMaterial({ color:0xff4f9e, roughness:0.16, metalness:0.0,
-    clearcoat:1.0, clearcoatRoughness:0.07, emissive:0x4a0026, emissiveIntensity:0.25 })
+  new THREE.MeshPhysicalMaterial({ color:0xfa8c80, roughness:0.22, metalness:0.0,
+    clearcoat:1.0, clearcoatRoughness:0.08, emissive:0x4a1815, emissiveIntensity:0.18 })
 ));
 
 function canvasTex(size,draw){
@@ -244,14 +250,17 @@ function canvasTex(size,draw){
 // ---- 5. THE WINDOW (bedazzled round compact) ---------------
 const eye=new THREE.Group(); eye.position.set(0,-0.02,1.01); eye.scale.setScalar(0.4); scene.add(eye);
 
-// 5a. glossy magenta glass
+// 5a. cream paper window (was glossy magenta glass)
 const glass=new THREE.Mesh(new THREE.CircleGeometry(0.5,72),
   new THREE.MeshBasicMaterial({ map:canvasTex(512,(ctx,s)=>{
-    const r=s/2, g=ctx.createRadialGradient(r,r*0.8,8,r,r,r);
-    g.addColorStop(0,'#ff8fc8');g.addColorStop(.45,'#c6007e');g.addColorStop(1,'#5e0038');
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(r,r,r,0,7);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.30)';                    // gloss crescent
-    ctx.beginPath();ctx.ellipse(r,r*0.55,r*0.6,r*0.28,0,0,7);ctx.fill();
+    const r=s/2;
+    ctx.fillStyle='#fbf0d0';ctx.beginPath();ctx.arc(r,r,r,0,7);ctx.fill();           // cream base
+    for(let i=0;i<240;i++){                                                          // paper grain
+      ctx.fillStyle=`rgba(120,80,40,${(Math.random()*0.05).toFixed(3)})`;
+      ctx.beginPath();ctx.arc(Math.random()*s,Math.random()*s,Math.random()*1.4+0.4,0,7);ctx.fill();
+    }
+    ctx.fillStyle='rgba(255,255,255,0.16)';                                          // subtle gloss
+    ctx.beginPath();ctx.ellipse(r,r*0.55,r*0.6,r*0.22,0,0,7);ctx.fill();
   }).tex, transparent:true, depthWrite:false }));
 eye.add(glass);
 
@@ -262,9 +271,8 @@ const idlePlane=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.8),idleMat); idlePl
 function drawIdle(){
   const ctx=idle.ctx,s=512; ctx.clearRect(0,0,s,s);
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font=`400 ${s*0.62}px Shrikhand, cursive`;
-  ctx.lineWidth=22;ctx.lineJoin='round';ctx.strokeStyle='#fff';ctx.strokeText('8',s/2,s/2+s*0.04);
-  ctx.fillStyle='#ffe34d';ctx.fillText('8',s/2,s/2+s*0.04);
+  ctx.font=`900 ${s*0.66}px 'Bodoni Moda', serif`;
+  ctx.fillStyle='#1a2540';ctx.fillText('8',s/2,s/2+s*0.04);
   idle.tex.needsUpdate=true;
 }
 
@@ -280,32 +288,31 @@ function drawAnswer(text,blur){
   const lines=wrap(text,11); const fs=lines.length>3?78:96, lh=fs*1.12;
   ctx.font=`400 ${fs}px 'Permanent Marker', cursive`;
   const top=s/2-(lines.length-1)*lh/2;
-  ctx.lineJoin='round';
   lines.forEach((ln,i)=>{ const y=top+i*lh;
-    ctx.lineWidth=fs*0.34;ctx.strokeStyle='#fff';ctx.strokeText(ln,s/2,y);  // white sticker outline
-    ctx.fillStyle='#ff1f8f';ctx.fillText(ln,s/2,y);                          // hot-pink fill
+    ctx.fillStyle='#1a2540';ctx.fillText(ln,s/2,y);                          // navy marker ink
   });
-  // sparkles
-  ctx.fillStyle='#fff8b0';ctx.font=`400 ${fs*0.6}px 'Permanent Marker', cursive`;
+  // small navy sparkle accents
+  ctx.fillStyle='rgba(26,37,64,0.55)';ctx.font=`400 ${fs*0.45}px 'Permanent Marker', cursive`;
   ctx.fillText('\u2738', s*0.16, s*0.2); ctx.fillText('\u2738', s*0.86, s*0.84);
   ctx.restore(); ans.tex.needsUpdate=true;
 }
 
-// 5d. rhinestone bezel (transparent center frames the glass)
-const bezel = new THREE.Mesh(new THREE.CircleGeometry(0.66,72),
-  new THREE.MeshBasicMaterial({ map:canvasTex(512,(ctx,s)=>{
-    const r=s/2; ctx.clearRect(0,0,s,s);
-    const ring=ctx.createRadialGradient(r,r,r*0.74,r,r,r*0.99);
-    ring.addColorStop(0,'rgba(0,0,0,0)');ring.addColorStop(.18,'#ff7ab8');ring.addColorStop(.6,'#ffd0e8');ring.addColorStop(1,'#ff4f9e');
-    ctx.fillStyle=ring;ctx.beginPath();ctx.arc(r,r,r,0,7);ctx.arc(r,r,r*0.76,0,7,true);ctx.fill();
-    for(let i=0;i<26;i++){const a=i/26*7, rr=r*0.87;            // rhinestones
-      const x=r+Math.cos(a)*rr,y=r+Math.sin(a)*rr;
-      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,r*0.028,0,7);ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(x-2,y-2,r*0.013,0,7);ctx.fill();
-    }
-  }).tex, transparent:true, depthWrite:false }));
-bezel.position.z = 0.03;
-eye.add(bezel);
+// 5d. cursive "Dumbass Ball" script tag below the window (Date Ball homage)
+const scrCanvas=document.createElement('canvas'); scrCanvas.width=900; scrCanvas.height=240;
+const scrCtx=scrCanvas.getContext('2d');
+const scrTex=new THREE.CanvasTexture(scrCanvas); scrTex.anisotropy=4;
+const scriptPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.42),
+  new THREE.MeshBasicMaterial({map:scrTex,transparent:true,depthWrite:false}));
+scriptPlane.position.set(0,-1.05,0.001); eye.add(scriptPlane);
+function drawScript(){
+  scrCtx.clearRect(0,0,scrCanvas.width,scrCanvas.height);
+  scrCtx.textAlign='center';scrCtx.textBaseline='middle';
+  scrCtx.font=`400 165px 'Pinyon Script', cursive`;
+  scrCtx.fillStyle='#1a2540';
+  scrCtx.fillText('Dumbass Ball', scrCanvas.width/2, scrCanvas.height*0.55);
+  scrTex.needsUpdate=true;
+}
+drawScript();
 
 // ---- 6. FLOATING CHARMS (hearts / stars / sparkles) --------
 const charms=new THREE.Group(); scene.add(charms);
@@ -382,7 +389,7 @@ function loop(now){
   ansPlane.scale.set(pop,pop,1);
   renderer.render(scene,camera);
 }
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{drawIdle(); if(pending)drawAnswer(pending,0);});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{drawIdle(); drawScript(); if(pending)drawAnswer(pending,0);});
 drawIdle();
 
 // ---- 10. RESPONSIVE ----------------------------------------
