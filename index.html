@@ -53,28 +53,26 @@
   #scene{position:fixed;inset:0;z-index:2;}
   canvas{display:block;}
 
-  /* ===== answer overlay (HTML window on the orb) ===== */
+  /* ===== answer overlay (white window on the black orb) ===== */
   #answer-overlay{
     position:fixed;left:50%;top:50%;
     width:clamp(150px,24vmin,240px);height:clamp(150px,24vmin,240px);
     transform:translate(-50%,-50%);border-radius:50%;
-    background:radial-gradient(circle at 50% 36%, #ff8fc8 0%, #c6007e 46%, #5e0038 100%);
-    box-shadow:inset 0 -10px 22px rgba(40,8,30,.45), inset 0 8px 16px rgba(255,255,255,.22), 0 6px 18px rgba(40,8,30,.35);
+    background:radial-gradient(circle at 50% 32%, #ffffff 0%, #f4ecd6 75%, #d9c89e 100%);
+    box-shadow:inset 0 -8px 18px rgba(40,30,15,.35), inset 0 6px 12px rgba(255,255,255,.95), 0 8px 22px rgba(0,0,0,.45);
     z-index:5;pointer-events:none;overflow:hidden;
     display:flex;align-items:center;justify-content:center;
     padding:clamp(10px,2.2vmin,22px);
-    font-family:'Permanent Marker',cursive;color:#fff;
-    text-shadow:0 2px 0 rgba(40,8,30,.5);
+    font-family:'Permanent Marker',cursive;color:#0a0a0a;
   }
   #answer-overlay .eight{
-    position:absolute;font-family:'Shrikhand',cursive;line-height:1;
-    font-size:clamp(72px,15vmin,140px);color:#ffe34d;-webkit-text-stroke:3px #fff;
-    text-shadow:0 4px 0 rgba(40,8,30,.4);transition:opacity .35s ease;
+    position:absolute;font-family:'Bodoni Moda',serif;font-weight:900;line-height:1;
+    font-size:clamp(78px,17vmin,150px);color:#0a0a0a;transition:opacity .35s ease;
     transform:translateY(2%);
   }
   #answer-overlay .ans{
     font-size:clamp(15px,3.4vmin,24px);line-height:1.08;text-align:center;
-    text-transform:lowercase;letter-spacing:.02em;max-width:96%;display:none;
+    text-transform:lowercase;letter-spacing:.02em;max-width:96%;display:none;color:#0a0a0a;
   }
   #answer-overlay .ans .word{display:inline-block;}
   #answer-overlay .ans .char{
@@ -169,6 +167,18 @@
   }
   #shake:active{box-shadow:0 2px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35);}
   #motion{font-size:12px;padding:8px 18px;display:none;background:rgba(255,255,255,.22);border-width:2px;}
+  #question{
+    pointer-events:auto;
+    font-family:'Bodoni Moda',serif;font-style:italic;font-size:17px;
+    background:rgba(255,246,216,.94);
+    border:1px solid rgba(60,20,10,.3);border-radius:4px;
+    padding:10px 18px;width:clamp(220px,64vw,400px);
+    text-align:center;color:#2a1a10;
+    box-shadow:0 3px 9px rgba(60,20,10,.28);
+    transition:box-shadow .2s ease,border-color .2s ease;
+  }
+  #question::placeholder{color:rgba(60,20,10,.45);font-style:italic;}
+  #question:focus{outline:none;border-color:var(--mag-red);box-shadow:0 4px 14px rgba(200,34,28,.32);}
 
   /* ===== pasted stickers ===== */
   .sticker{position:fixed;z-index:9;pointer-events:none;font-family:'Permanent Marker',cursive;}
@@ -234,6 +244,7 @@
 
   <div id="ui">
     <p id="hint"></p>
+    <input id="question" type="text" placeholder="ask the ball..." maxlength="100" autocomplete="off" />
     <button id="shake" class="btn">Ask</button>
     <button id="motion" class="btn">Enable motion</button>
   </div>
@@ -270,19 +281,19 @@ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 mount.appendChild(renderer.domElement);
 
-// ---- 3. LIGHTS (multi-hue so the gloss reads candy/iridescent) ----
-scene.add(new THREE.AmbientLight(0xffd6ec,0.7));
-const key=new THREE.DirectionalLight(0xffffff,1.4); key.position.set(2.5,4,5); scene.add(key);
-const p1=new THREE.PointLight(0xffffff,1.6,20); p1.position.set(-3,3,3); scene.add(p1);   // white gloss pip
-const p2=new THREE.PointLight(0xc7a4ff,1.3,20); p2.position.set(3,-2,2); scene.add(p2);    // lilac
-const p3=new THREE.PointLight(0xff1f8f,1.2,20); p3.position.set(0,2,-3); scene.add(p3);     // hot pink back
+// ---- 3. LIGHTS (neutral so the black plastic reads classic, with a touch of warmth) ----
+scene.add(new THREE.AmbientLight(0xfff0e0,0.45));
+const key=new THREE.DirectionalLight(0xffffff,1.2); key.position.set(2.5,4,5); scene.add(key);
+const p1=new THREE.PointLight(0xffffff,1.4,20); p1.position.set(-3,3,3); scene.add(p1);   // white gloss pip
+const p2=new THREE.PointLight(0xffe0c8,0.7,20); p2.position.set(3,-2,2); scene.add(p2);    // warm fill
+const p3=new THREE.PointLight(0x3a2030,0.5,20); p3.position.set(0,2,-3); scene.add(p3);    // subtle dark rim
 
-// ---- 4. SHELL (glossy bubblegum plastic) -------------------
+// ---- 4. SHELL (glossy black plastic, classic 8-ball) -------
 const orb=new THREE.Group(); scene.add(orb);
 orb.add(new THREE.Mesh(
   new THREE.SphereGeometry(1,72,72),
-  new THREE.MeshPhysicalMaterial({ color:0xff4f9e, roughness:0.16, metalness:0.0,
-    clearcoat:1.0, clearcoatRoughness:0.07, emissive:0x4a0026, emissiveIntensity:0.25 })
+  new THREE.MeshPhysicalMaterial({ color:0x0e0e0e, roughness:0.18, metalness:0.0,
+    clearcoat:1.0, clearcoatRoughness:0.05, emissive:0x080808, emissiveIntensity:0.08 })
 ));
 
 function canvasTex(size,draw){
@@ -352,7 +363,9 @@ function ask(){
   if(navigator.vibrate) navigator.vibrate(30);
 }
 document.getElementById('shake').addEventListener('click',ask);
-renderer.domElement.addEventListener('pointerdown',ask);
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT')ask();});
+const questionInput=document.getElementById('question');
+questionInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();questionInput.blur();ask();}});
 
 // ---- 8. DEVICE MOTION --------------------------------------
 const THRESH=18; let lastShake=0;
