@@ -65,8 +65,9 @@
     padding:clamp(10px,2.2vmin,22px);
     font-family:'Permanent Marker',cursive;color:#0a0a0a;
     perspective:800px;
-    transition:background 500ms ease, box-shadow 500ms ease;
+    transition:background 500ms ease, box-shadow 500ms ease, opacity 600ms ease;
   }
+  #answer-overlay.pre-first{opacity:0;}
   #answer-overlay.waking,
   #answer-overlay.answering{
     background:radial-gradient(circle at 50% 32%, #0a1340 0%, #050a26 75%, #02041a 100%);
@@ -267,7 +268,7 @@
   <div id="scene"></div>
 
   <!-- answer "window" — HTML overlay on top of the orb -->
-  <div id="answer-overlay" class="idle" aria-hidden="true">
+  <div id="answer-overlay" class="idle pre-first" aria-hidden="true">
     <span class="eight">8</span>
     <div class="tri"><span class="ans"></span></div>
   </div>
@@ -384,9 +385,14 @@ function shape(kind,color){ return canvasTex(128,(ctx,s)=>{
 const charmTex=[shape('heart','#ff3d9a'),shape('star','#ffe34d'),shape('star','#c7a4ff'),shape('sparkle','#ffffff'),shape('heart','#ff8ec6')];
 for(let i=0;i<18;i++){
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:charmTex[i%charmTex.length],transparent:true,depthWrite:false}));
-  const rad=1.7+Math.random()*2.2, a=Math.random()*7, b=Math.acos(2*Math.random()-1);
-  sp.userData={bx:rad*Math.sin(b)*Math.cos(a),by:rad*Math.sin(b)*Math.sin(a),bz:rad*Math.cos(b)*0.5,
-    ph:Math.random()*7, spd:0.5+Math.random()*0.8, amp:0.1+Math.random()*0.15};
+  // distribute around-and-behind the orb so they never render in front
+  const a=Math.random()*7, ringR=1.6+Math.random()*2.4;
+  sp.userData={
+    bx: Math.cos(a)*ringR,
+    by: (Math.random()*2-1)*2.6,
+    bz: -1.6 - Math.random()*1.8,         // always behind orb back-face
+    ph:Math.random()*7, spd:0.5+Math.random()*0.8, amp:0.1+Math.random()*0.15
+  };
   sp.position.set(sp.userData.bx,sp.userData.by,sp.userData.bz);
   const sc=0.16+Math.random()*0.22; sp.scale.set(sc,sc,sc);
   charms.add(sp);
@@ -394,15 +400,20 @@ for(let i=0;i<18;i++){
 
 // ---- 7. STATE MACHINE --------------------------------------
 const S={IDLE:0,WAKING:1,REVEAL:2}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
-const WAKE_MS=1200, REVEAL_MS=3800; const hint=document.getElementById('hint');
+const WAKE_MS=1200, FIRST_WAKE_MS=1900, REVEAL_MS=3800; const hint=document.getElementById('hint');
 const REVEAL_BASE_DELAY_MS=620;
+let firstShake=true;
 let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING) return;
   state=S.WAKING; t0=performance.now(); asked=true;
   pending=ANSWERS[Math.floor(Math.random()*ANSWERS.length)];
   spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
-  setOverlay('waking');
+  spin.first=firstShake; firstShake=false;
+  // first shake: keep overlay in .idle so the white "8" window fades in
+  // mid-spin (the ball "turns around to its answer side"). Subsequent shakes
+  // go straight to the dark navy waking state.
+  if(!spin.first) setOverlay('waking');
   hint.textContent=WAKE_LINES[Math.floor(Math.random()*WAKE_LINES.length)];
   if(navigator.vibrate) navigator.vibrate(30);
 }
@@ -424,7 +435,6 @@ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermi
 // ---- 9. RENDER LOOP ----------------------------------------
 function loop(now){
   requestAnimationFrame(loop); const t=now*0.001;
-  charms.rotation.y=t*0.05;
   charms.children.forEach(sp=>{const u=sp.userData;sp.position.y=u.by+Math.sin(t*u.spd+u.ph)*u.amp;sp.material.rotation=Math.sin(t*0.5+u.ph)*0.3;});
 
   if(state===S.IDLE){
@@ -432,11 +442,20 @@ function loop(now){
     orb.scale.setScalar(1+Math.sin(t*1.5)*0.018);
   }
   else if(state===S.WAKING){
-    const p=(now-t0)/WAKE_MS, d=1-p, ts=now*0.001, f=4.5;          // slow visible sin wobble
-    orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.18 * d;
-    orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.13 * d;
-    orb.rotation.x = Math.sin(ts*f*3.14 + spin.x) * 0.22 * d;
-    orb.rotation.y = Math.sin(ts*f*3.14*0.9 + spin.y) * 0.22 * d;
+    const wakeMs = spin.first ? FIRST_WAKE_MS : WAKE_MS;
+    const p=(now-t0)/wakeMs, d=1-p, ts=now*0.001, f=4.5;
+    if(spin.first){
+      // dramatic "turn around to the answer side": one full Y rotation, ease-out
+      orb.rotation.y = -2*Math.PI*(1 - p*(2-p));
+      orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.09 * d;
+      orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.07 * d;
+      if(p>0.45 && overlay.classList.contains('pre-first')) overlay.classList.remove('pre-first');
+    } else {
+      orb.position.x = Math.sin(ts*f*6.2832 + spin.x*3.14) * 0.18 * d;
+      orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.13 * d;
+      orb.rotation.x = Math.sin(ts*f*3.14 + spin.x) * 0.22 * d;
+      orb.rotation.y = Math.sin(ts*f*3.14*0.9 + spin.y) * 0.22 * d;
+    }
     const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
     overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px))`;
     if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.REVEAL;t0=now;showAnswerHTML(pending);}
