@@ -65,6 +65,11 @@
     padding:clamp(10px,2.2vmin,22px);
     font-family:'Permanent Marker',cursive;color:#0a0a0a;
     perspective:800px;
+    transition:background 500ms ease, box-shadow 500ms ease;
+  }
+  #answer-overlay.answering{
+    background:radial-gradient(circle at 50% 32%, #0a1340 0%, #050a26 75%, #02041a 100%);
+    box-shadow:inset 0 -8px 20px rgba(0,0,0,.55), inset 0 6px 14px rgba(70,100,180,.18), 0 8px 22px rgba(0,0,0,.55);
   }
   #answer-overlay .eight{
     position:absolute;font-family:'Bodoni Moda',serif;font-weight:900;line-height:1;
