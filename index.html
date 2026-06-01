@@ -71,23 +71,25 @@
     transform:translateY(2%);
   }
   #answer-overlay .tri{
-    position:absolute;width:88%;aspect-ratio:1.155/1;top:11%;
+    position:absolute;left:50%;top:18%;
+    transform:translateX(-50%);
+    width:86%;aspect-ratio:1.155/1;
     clip-path:polygon(0 0, 100% 0, 50% 100%);
-    background:linear-gradient(180deg,#1a2e8f 0%,#0e1f6e 100%);
+    background:radial-gradient(ellipse 80% 65% at 50% 22%, #4a64d0 0%, #1f33a0 45%, #0a1660 100%);
+    filter:drop-shadow(0 0 10px rgba(80,120,235,.55)) drop-shadow(0 3px 5px rgba(0,0,0,.35));
     display:none;align-items:flex-start;justify-content:center;
-    padding:13% 8% 0;
-    box-shadow:inset 0 0 12px rgba(255,255,255,.12);
+    padding:14% 9% 0;
   }
   #answer-overlay.answering .tri{display:flex;}
   #answer-overlay .ans{
     font-size:clamp(14px,3.2vmin,22px);line-height:1.08;text-align:center;
-    text-transform:lowercase;letter-spacing:.02em;color:#fff;
-    text-shadow:0 1px 2px rgba(0,0,0,.4);
+    text-transform:lowercase;letter-spacing:.02em;color:#f5fbff;
+    text-shadow:0 0 5px rgba(180,210,255,.75),0 0 11px rgba(140,180,255,.55),0 1px 1px rgba(0,0,0,.45);
   }
   #answer-overlay .ans .word{display:inline-block;}
   #answer-overlay .ans .char{
     display:inline-block;opacity:0;will-change:filter,opacity;
-    animation:char-reveal 460ms cubic-bezier(.2,.7,.3,1) both;
+    animation:char-reveal 600ms cubic-bezier(.2,.7,.3,1) both;
   }
   #answer-overlay.idle .eight{opacity:1;}
   #answer-overlay.waking .eight{opacity:0;}
@@ -323,7 +325,7 @@ function canvasTex(size,draw){
 // ---- 5. ANSWER WINDOW (HTML overlay, see #answer-overlay) --
 const overlay=document.getElementById('answer-overlay');
 const overlayAns=overlay.querySelector('.ans');
-const CHAR_STAGGER_MS=55;
+const CHAR_STAGGER_MS=80;
 function setOverlay(stateClass){overlay.classList.remove('idle','waking','answering');overlay.classList.add(stateClass);}
 function showAnswerHTML(text){
   overlayAns.innerHTML='';
@@ -370,7 +372,8 @@ for(let i=0;i<18;i++){
 
 // ---- 7. STATE MACHINE --------------------------------------
 const S={IDLE:0,WAKING:1,REVEAL:2}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
-const WAKE_MS=1200, REVEAL_MS=2000; const hint=document.getElementById('hint');
+const WAKE_MS=1200, REVEAL_MS=2500; const hint=document.getElementById('hint');
+let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING) return;
   state=S.WAKING; t0=performance.now(); asked=true;
@@ -411,7 +414,9 @@ function loop(now){
     orb.position.y = Math.cos(ts*f*6.2832*1.4 + spin.y*3.14) * 0.13 * d;
     orb.rotation.x = Math.sin(ts*f*3.14 + spin.x) * 0.22 * d;
     orb.rotation.y = Math.sin(ts*f*3.14*0.9 + spin.y) * 0.22 * d;
-    if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);state=S.REVEAL;t0=now;showAnswerHTML(pending);}
+    const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
+    overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px))`;
+    if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.REVEAL;t0=now;showAnswerHTML(pending);}
   }
   else if(state===S.REVEAL){
     const p=Math.min((now-t0)/REVEAL_MS,1);
@@ -422,7 +427,13 @@ function loop(now){
 }
 
 // ---- 10. RESPONSIVE ----------------------------------------
-function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.position.z=h>w?6.2:4.2;camera.updateProjectionMatrix();}
+function resize(){
+  const w=innerWidth,h=innerHeight;renderer.setSize(w,h);
+  camera.aspect=w/h;camera.position.z=h>w?6.2:4.2;
+  camera.updateProjectionMatrix();
+  const vFov=camera.fov*Math.PI/180;
+  pxPerWorld=h/(2*camera.position.z*Math.tan(vFov/2));
+}
 addEventListener('resize',resize); resize(); requestAnimationFrame(loop);
 
 // ---- 11. PWA SERVICE WORKER --------------------------------
