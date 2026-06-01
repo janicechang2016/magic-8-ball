@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Magic 8 &#9733; the fate edit</title>
+
+<!-- ===== PWA / add-to-home-screen ===== -->
+<meta name="theme-color" content="#ff2f93" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Magic 8" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Permanent+Marker&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bubble:#ff5fa6;
+    --hot:#ff1f8f;
+    --magenta:#e8008f;
+    --baby:#ffd6ec;
+    --cream:#fff2f9;
+    --lilac:#c7a4ff;
+    --ink:#8a0a4f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    font-family:'Fredoka',system-ui,sans-serif;
+    background:radial-gradient(125% 105% at 50% 0%, #ffe0f0 0%, #ff86c2 42%, #ff2f93 100%);
+    color:var(--ink);-webkit-tap-highlight-color:transparent;user-select:none;
+    position:fixed;inset:0;
+  }
+  /* polka dots */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.28;
+    background-image:radial-gradient(circle, rgba(255,255,255,.85) 2px, transparent 2.6px);
+    background-size:28px 28px;
+    -webkit-mask:radial-gradient(circle at 50% 44%, transparent 30%, #000 78%);
+    mask:radial-gradient(circle at 50% 44%, transparent 30%, #000 78%);
+  }
+  /* gloss sheen sweep across the top */
+  body::after{
+    content:"";position:fixed;top:0;left:0;right:0;height:42%;z-index:1;pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+    -webkit-mask:linear-gradient(180deg,#000,transparent);mask:linear-gradient(180deg,#000,transparent);
+  }
+  #scene{position:fixed;inset:0;z-index:2;}
+  canvas{display:block;}
+
+  /* ===== magazine masthead ===== */
+  #masthead{position:fixed;top:calc(20px + env(safe-area-inset-top));left:0;right:0;z-index:10;text-align:center;pointer-events:none;}
+  #masthead h1{
+    font-family:'Shrikhand',cursive;font-weight:400;font-size:clamp(38px,13vw,72px);
+    line-height:.9;color:#fff;letter-spacing:.01em;transform:rotate(-3deg);
+    -webkit-text-stroke:3px var(--magenta);
+    text-shadow:0 4px 0 var(--magenta), 5px 8px 0 rgba(138,10,79,.35);
+  }
+  #masthead h1 .star{color:#fff8b0;-webkit-text-stroke:3px #ff8a00;display:inline-block;transform:rotate(12deg) scale(1.05);}
+  #masthead .kicker{
+    display:inline-block;margin-top:8px;font-family:'Permanent Marker',cursive;
+    font-size:14px;color:#fff;background:var(--hot);padding:4px 14px;border-radius:20px;
+    transform:rotate(2deg);box-shadow:0 3px 0 rgba(138,10,79,.4);letter-spacing:.02em;
+  }
+
+  /* ===== bottom UI ===== */
+  #ui{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;flex-direction:column;align-items:center;gap:13px;padding:0 24px calc(30px + env(safe-area-inset-bottom));pointer-events:none;}
+  #hint{font-family:'Permanent Marker',cursive;font-size:15px;color:#fff;text-shadow:1px 2px 0 var(--magenta);min-height:1.1em;letter-spacing:.02em;transition:opacity .35s ease;}
+  .btn{pointer-events:auto;cursor:pointer;font-family:'Fredoka',sans-serif;font-weight:700;letter-spacing:.04em;color:#fff;border:3px solid #fff;border-radius:999px;transition:transform .14s ease, box-shadow .2s ease;}
+  .btn:active{transform:scale(.93) rotate(-1deg);}
+  #shake{
+    font-size:21px;padding:15px 52px;text-transform:uppercase;
+    background:linear-gradient(180deg, #ff8ec6 0%, var(--hot) 55%, var(--magenta) 100%);
+    box-shadow:0 6px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35), 0 14px 26px rgba(138,10,79,.4);
+  }
+  #shake:active{box-shadow:0 2px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35);}
+  #motion{font-size:12px;padding:8px 18px;display:none;background:rgba(255,255,255,.22);border-width:2px;}
+
+  /* ===== pasted stickers ===== */
+  .sticker{position:fixed;z-index:9;pointer-events:none;font-family:'Permanent Marker',cursive;}
+  .badge{
+    background:#fff8b0;color:var(--magenta);border:2px solid var(--magenta);border-radius:50%;
+    width:78px;height:78px;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:13px;line-height:1.05;box-shadow:0 4px 10px rgba(138,10,79,.3);padding:6px;
+  }
+  .tag{background:var(--lilac);color:#fff;padding:5px 12px;border-radius:14px;font-size:13px;box-shadow:0 3px 0 rgba(138,10,79,.35);}
+  .deco{font-size:30px;filter:drop-shadow(0 3px 4px rgba(138,10,79,.35));}
+</style>
+</head>
+<body>
+  <div id="masthead">
+    <h1>magic <span class="star">&#9733;</span> 8</h1>
+    <div class="kicker">your fate, but make it pink</div>
+  </div>
+
+  <div id="scene"></div>
+
+  <!-- stickers (decor only) -->
+  <div class="sticker badge" style="top:18%;right:6%;transform:rotate(13deg);">100%<br>ACCURATE*</div>
+  <div class="sticker tag"   style="top:30%;left:5%;transform:rotate(-9deg);">so fetch &#10038;</div>
+  <div class="sticker deco"  style="top:62%;right:9%;transform:rotate(8deg);">&#129419;</div>
+  <div class="sticker deco"  style="top:58%;left:7%;transform:rotate(-12deg);">&#128150;</div>
+  <div class="sticker" style="bottom:calc(96px + env(safe-area-inset-bottom));right:10%;font-size:11px;color:#fff;transform:rotate(-3deg);text-shadow:1px 1px 0 var(--magenta);">*results may be<br>totally fictional</div>
+
+  <div id="ui">
+    <p id="hint">shake it bestie &#9825; or tap</p>
+    <button id="shake" class="btn">Ask</button>
+    <button id="motion" class="btn">Enable motion</button>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================================================
+   MAGIC 8 — "the fate edit"   (Y2K / Mean Girls restyle)
+   Single file, Three.js r128, fully procedural, PWA-ready.
+   Form kept identical to spec: sphere + ONE round window
+   (the window = the physical screen in iteration 3).
+   Blocks: 1 answers · 2 scene · 3 lights · 4 shell · 5 window
+           · 6 charms · 7 state · 8 motion · 9 loop · 10 resize · 11 pwa
+   ============================================================ */
+
+// ---- 1. ANSWERS --------------------------------------------
+const ANSWERS = [
+  "are you stupid","don't be embarrassing","it's literally not ok","yas queen",
+  "yes but only because i'm in a good mood","the universe said no",
+  "mercury is in retrograde, so...","obviously",
+  "yes 💖 (don't tell anyone i said that)","fine. but you owe me.",
+  "no, he is a dumbass","go kick rocks","pull the victim tampon out of your ass",
+  "stfu","go write about it in your diary bitch",
+  "ask again","fuck around and find out","do you enjoy being a clown?",
+  "feminism died today","greyrock his ass girl"
+];
+const WAKE_LINES = ["consulting my extremely worn thin patience","send his ass to the stratosphere girl <3","remember, forgive but never forget :)"];
+
+// ---- 2. SCENE ----------------------------------------------
+const mount=document.getElementById('scene');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,0.1,100); camera.position.set(0,0,4);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+mount.appendChild(renderer.domElement);
+
+// ---- 3. LIGHTS (multi-hue so the gloss reads candy/iridescent) ----
+scene.add(new THREE.AmbientLight(0xffd6ec,0.7));
+const key=new THREE.DirectionalLight(0xffffff,1.4); key.position.set(2.5,4,5); scene.add(key);
+const p1=new THREE.PointLight(0xffffff,1.6,20); p1.position.set(-3,3,3); scene.add(p1);   // white gloss pip
+const p2=new THREE.PointLight(0xc7a4ff,1.3,20); p2.position.set(3,-2,2); scene.add(p2);    // lilac
+const p3=new THREE.PointLight(0xff1f8f,1.2,20); p3.position.set(0,2,-3); scene.add(p3);     // hot pink back
+
+// ---- 4. SHELL (glossy bubblegum plastic) -------------------
+const orb=new THREE.Group(); scene.add(orb);
+orb.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1,72,72),
+  new THREE.MeshPhysicalMaterial({ color:0xff4f9e, roughness:0.16, metalness:0.0,
+    clearcoat:1.0, clearcoatRoughness:0.07, emissive:0x4a0026, emissiveIntensity:0.25 })
+));
+
+function canvasTex(size,draw){
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const ctx=c.getContext('2d'); draw(ctx,size);
+  const t=new THREE.CanvasTexture(c); t.anisotropy=4; return {tex:t,canvas:c,ctx};
+}
+
+// ---- 5. THE WINDOW (bedazzled round compact) ---------------
+const eye=new THREE.Group(); eye.position.set(0,-0.02,0.9); orb.add(eye);
+
+// 5a. glossy magenta glass
+const glass=new THREE.Mesh(new THREE.CircleGeometry(0.5,72),
+  new THREE.MeshBasicMaterial({ map:canvasTex(512,(ctx,s)=>{
+    const r=s/2, g=ctx.createRadialGradient(r,r*0.8,8,r,r,r);
+    g.addColorStop(0,'#ff8fc8');g.addColorStop(.45,'#c6007e');g.addColorStop(1,'#5e0038');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(r,r,r,0,7);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.30)';                    // gloss crescent
+    ctx.beginPath();ctx.ellipse(r,r*0.55,r*0.6,r*0.28,0,0,7);ctx.fill();
+  }).tex, transparent:true, depthWrite:false }));
+eye.add(glass);
+
+// 5b. idle "8" sticker
+const idle=canvasTex(512,()=>{});
+const idleMat=new THREE.MeshBasicMaterial({map:idle.tex,transparent:true,opacity:0,depthWrite:false});
+const idlePlane=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.8),idleMat); idlePlane.position.z=0.02; eye.add(idlePlane);
+function drawIdle(){
+  const ctx=idle.ctx,s=512; ctx.clearRect(0,0,s,s);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`400 ${s*0.62}px Shrikhand, cursive`;
+  ctx.lineWidth=22;ctx.lineJoin='round';ctx.strokeStyle='#fff';ctx.strokeText('8',s/2,s/2+s*0.04);
+  ctx.fillStyle='#ffe34d';ctx.fillText('8',s/2,s/2+s*0.04);
+  idle.tex.needsUpdate=true;
+}
+
+// 5c. answer plate (marker-sticker reveal)
+const ans=canvasTex(768,()=>{});
+const ansMat=new THREE.MeshBasicMaterial({map:ans.tex,transparent:true,opacity:0,depthWrite:false});
+const ansPlane=new THREE.Mesh(new THREE.PlaneGeometry(0.82,0.82),ansMat); ansPlane.position.z=0.025; eye.add(ansPlane);
+function wrap(t,m){const w=t.split(' ');let L=[],l='';for(const x of w){if((l+' '+x).trim().length>m){L.push(l.trim());l=x;}else l+=' '+x;}if(l.trim())L.push(l.trim());return L;}
+function drawAnswer(text,blur){
+  const ctx=ans.ctx,s=768; ctx.clearRect(0,0,s,s);
+  ctx.save(); ctx.filter=blur>0.1?`blur(${blur}px)`:'none';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const lines=wrap(text,11); const fs=lines.length>3?78:96, lh=fs*1.12;
+  ctx.font=`400 ${fs}px 'Permanent Marker', cursive`;
+  const top=s/2-(lines.length-1)*lh/2;
+  ctx.lineJoin='round';
+  lines.forEach((ln,i)=>{ const y=top+i*lh;
+    ctx.lineWidth=fs*0.34;ctx.strokeStyle='#fff';ctx.strokeText(ln,s/2,y);  // white sticker outline
+    ctx.fillStyle='#ff1f8f';ctx.fillText(ln,s/2,y);                          // hot-pink fill
+  });
+  // sparkles
+  ctx.fillStyle='#fff8b0';ctx.font=`400 ${fs*0.6}px 'Permanent Marker', cursive`;
+  ctx.fillText('\u2738', s*0.16, s*0.2); ctx.fillText('\u2738', s*0.86, s*0.84);
+  ctx.restore(); ans.tex.needsUpdate=true;
+}
+
+// 5d. rhinestone bezel (transparent center frames the glass)
+eye.add(new THREE.Mesh(new THREE.CircleGeometry(0.66,72),
+  new THREE.MeshBasicMaterial({ map:canvasTex(512,(ctx,s)=>{
+    const r=s/2; ctx.clearRect(0,0,s,s);
+    const ring=ctx.createRadialGradient(r,r,r*0.74,r,r,r*0.99);
+    ring.addColorStop(0,'rgba(0,0,0,0)');ring.addColorStop(.18,'#ff7ab8');ring.addColorStop(.6,'#ffd0e8');ring.addColorStop(1,'#ff4f9e');
+    ctx.fillStyle=ring;ctx.beginPath();ctx.arc(r,r,r,0,7);ctx.arc(r,r,r*0.76,0,7,true);ctx.fill();
+    for(let i=0;i<26;i++){const a=i/26*7, rr=r*0.87;            // rhinestones
+      const x=r+Math.cos(a)*rr,y=r+Math.sin(a)*rr;
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,r*0.028,0,7);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(x-2,y-2,r*0.013,0,7);ctx.fill();
+    }
+  }).tex, transparent:true, depthWrite:false })
+)).position.z=0.03;
+
+// ---- 6. FLOATING CHARMS (hearts / stars / sparkles) --------
+const charms=new THREE.Group(); scene.add(charms);
+function shape(kind,color){ return canvasTex(128,(ctx,s)=>{
+  ctx.translate(s/2,s/2); ctx.fillStyle=color; ctx.strokeStyle='#fff'; ctx.lineWidth=6; ctx.lineJoin='round';
+  const R=s*0.36; ctx.beginPath();
+  if(kind==='heart'){ctx.moveTo(0,R*0.5);ctx.bezierCurveTo(R*1.1,-R*0.5,R*0.5,-R*1.1,0,-R*0.35);ctx.bezierCurveTo(-R*0.5,-R*1.1,-R*1.1,-R*0.5,0,R*0.5);}
+  else if(kind==='star'){for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2,rr=i%2?R*0.45:R;const x=Math.cos(a)*rr,y=Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();}
+  else{for(let i=0;i<8;i++){const a=Math.PI/4*i,rr=i%2?R*0.22:R;const x=Math.cos(a)*rr,y=Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();}
+  ctx.fill();ctx.stroke();
+}).tex; }
+const charmTex=[shape('heart','#ff3d9a'),shape('star','#ffe34d'),shape('star','#c7a4ff'),shape('sparkle','#ffffff'),shape('heart','#ff8ec6')];
+for(let i=0;i<18;i++){
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:charmTex[i%charmTex.length],transparent:true,depthWrite:false}));
+  const rad=1.7+Math.random()*2.2, a=Math.random()*7, b=Math.acos(2*Math.random()-1);
+  sp.userData={bx:rad*Math.sin(b)*Math.cos(a),by:rad*Math.sin(b)*Math.sin(a),bz:rad*Math.cos(b)*0.5,
+    ph:Math.random()*7, spd:0.5+Math.random()*0.8, amp:0.1+Math.random()*0.15};
+  sp.position.set(sp.userData.bx,sp.userData.by,sp.userData.bz);
+  const sc=0.16+Math.random()*0.22; sp.scale.set(sc,sc,sc);
+  charms.add(sp);
+}
+
+// ---- 7. STATE MACHINE --------------------------------------
+const S={IDLE:0,WAKING:1,REVEAL:2}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
+const WAKE_MS=800, REVEAL_MS=820; const hint=document.getElementById('hint');
+function ask(){
+  if(state===S.WAKING) return;
+  state=S.WAKING; t0=performance.now(); asked=true;
+  pending=ANSWERS[Math.floor(Math.random()*ANSWERS.length)];
+  spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
+  ansMat.opacity=0;
+  hint.textContent=WAKE_LINES[Math.floor(Math.random()*WAKE_LINES.length)];
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+document.getElementById('shake').addEventListener('click',ask);
+renderer.domElement.addEventListener('pointerdown',ask);
+
+// ---- 8. DEVICE MOTION --------------------------------------
+const THRESH=18; let lastShake=0;
+function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
+  const m=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z),now=performance.now();
+  if(m>THRESH&&now-lastShake>1200){lastShake=now;ask();}}
+if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
+  const mb=document.getElementById('motion');mb.style.display='block';
+  mb.addEventListener('click',async()=>{try{if(await DeviceMotionEvent.requestPermission()==='granted'){window.addEventListener('devicemotion',onMotion);mb.style.display='none';}}catch(_){}});
+}else if(typeof DeviceMotionEvent!=='undefined'){window.addEventListener('devicemotion',onMotion);}
+
+// ---- 9. RENDER LOOP ----------------------------------------
+function loop(now){
+  requestAnimationFrame(loop); const t=now*0.001;
+  charms.rotation.y=t*0.05;
+  charms.children.forEach(sp=>{const u=sp.userData;sp.position.y=u.by+Math.sin(t*u.spd+u.ph)*u.amp;sp.material.rotation=Math.sin(t*0.5+u.ph)*0.3;});
+
+  let pop=1;
+  if(state===S.IDLE){
+    orb.position.y=Math.sin(t*1.0)*0.04; orb.rotation.y+=0.0015; orb.rotation.x=Math.sin(t*0.5)*0.03;
+    orb.scale.setScalar(1+Math.sin(t*1.5)*0.018);
+    idleMat.opacity = asked?0:Math.min(idleMat.opacity+0.04,1);
+  }
+  else if(state===S.WAKING){
+    const p=(now-t0)/WAKE_MS,d=1-p;
+    orb.position.x=(Math.random()*2-1)*0.06*d; orb.position.y=(Math.random()*2-1)*0.06*d;
+    orb.rotation.x+=spin.x*0.13*d; orb.rotation.y+=spin.y*0.13*d;
+    idleMat.opacity=Math.max(idleMat.opacity-0.1,0);
+    if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);state=S.REVEAL;t0=now;}
+  }
+  else if(state===S.REVEAL){
+    const p=Math.min((now-t0)/REVEAL_MS,1), e=1-Math.pow(1-p,3);
+    drawAnswer(pending, 15*(1-e)); ansMat.opacity=e;
+    pop = 1.18 - 0.18*e + (p<0.5?0:Math.sin((p-0.5)*Math.PI)*0.06);   // pop-in overshoot
+    orb.position.y=Math.sin(t*1.0)*0.04;
+    if(p>=1){state=S.IDLE; hint.textContent='it has spoken \u2665';}
+  }
+  ansPlane.scale.set(pop,pop,1);
+  renderer.render(scene,camera);
+}
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{drawIdle(); if(pending)drawAnswer(pending,0);});
+drawIdle();
+
+// ---- 10. RESPONSIVE ----------------------------------------
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.position.z=h>w?4.7:4.0;camera.updateProjectionMatrix();}
+addEventListener('resize',resize); resize(); requestAnimationFrame(loop);
+
+// ---- 11. PWA SERVICE WORKER --------------------------------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
