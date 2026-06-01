@@ -38,31 +38,25 @@
   body{
     font-family:'Fredoka',system-ui,sans-serif;
     background:
-      radial-gradient(ellipse 70% 50% at 25% 25%, rgba(255,200,170,.25), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80% 75%, rgba(190,160,210,.20), transparent 60%),
+      linear-gradient(170deg, rgba(244,234,208,.28), rgba(237,224,192,.34)),
+      url('./magazine-inspo.webp') center center / cover no-repeat fixed,
       linear-gradient(170deg, var(--paper) 0%, var(--paper-warm) 100%);
     color:var(--paper-ink);-webkit-tap-highlight-color:transparent;user-select:none;
     position:fixed;inset:0;
   }
-  /* paper grain */
+  /* soft vignette focusing attention on the orb */
   body::before{
-    content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.55;
-    background-image:
-      radial-gradient(circle at 30% 20%, rgba(120,80,40,.04) 1px, transparent 1.5px),
-      radial-gradient(circle at 70% 60%, rgba(100,60,20,.05) 1px, transparent 1.5px),
-      radial-gradient(circle at 15% 80%, rgba(140,100,60,.03) 1px, transparent 1.5px);
-    background-size:23px 23px, 31px 31px, 17px 17px;
-  }
-  /* page crease shadow down the middle (book gutter) */
-  body::after{
-    content:"";position:fixed;top:0;bottom:0;left:50%;width:120px;transform:translateX(-50%);z-index:1;pointer-events:none;
-    background:radial-gradient(ellipse 60% 100% at 50% 50%, rgba(80,40,10,.10), transparent 70%);
+    content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(ellipse 65% 60% at 50% 55%, rgba(244,234,208,.35) 0%, transparent 55%),
+               radial-gradient(ellipse 120% 120% at 50% 50%, transparent 50%, rgba(60,40,20,.18) 100%);
   }
   #scene{position:fixed;inset:0;z-index:2;}
   canvas{display:block;}
 
   /* ===== magazine spread fragments (behind the orb) ===== */
-  #mag-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;color:var(--paper-ink);}
+  /* procedural fragments — hidden now that the real magazine photo is the bg.
+     Set display:flex (or revert this rule) to restore the layered look. */
+  #mag-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;color:var(--paper-ink);display:none;}
   #mag-bg .strip{
     position:absolute;left:14px;top:14vh;width:74px;
     font-family:'DM Serif Display',serif;font-size:11px;letter-spacing:.6px;
