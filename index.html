@@ -170,7 +170,7 @@ function canvasTex(size,draw){
 }
 
 // ---- 5. THE WINDOW (bedazzled round compact) ---------------
-const eye=new THREE.Group(); eye.position.set(0,-0.02,0.9); orb.add(eye);
+const eye=new THREE.Group(); eye.position.set(0,-0.02,1.01); orb.add(eye);
 
 // 5a. glossy magenta glass
 const glass=new THREE.Mesh(new THREE.CircleGeometry(0.5,72),
@@ -220,7 +220,7 @@ function drawAnswer(text,blur){
 }
 
 // 5d. rhinestone bezel (transparent center frames the glass)
-eye.add(new THREE.Mesh(new THREE.CircleGeometry(0.66,72),
+const bezel = new THREE.Mesh(new THREE.CircleGeometry(0.66,72),
   new THREE.MeshBasicMaterial({ map:canvasTex(512,(ctx,s)=>{
     const r=s/2; ctx.clearRect(0,0,s,s);
     const ring=ctx.createRadialGradient(r,r,r*0.74,r,r,r*0.99);
@@ -231,8 +231,9 @@ eye.add(new THREE.Mesh(new THREE.CircleGeometry(0.66,72),
       ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,r*0.028,0,7);ctx.fill();
       ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(x-2,y-2,r*0.013,0,7);ctx.fill();
     }
-  }).tex, transparent:true, depthWrite:false })
-)).position.z=0.03;
+  }).tex, transparent:true, depthWrite:false }));
+bezel.position.z = 0.03;
+eye.add(bezel);
 
 // ---- 6. FLOATING CHARMS (hearts / stars / sparkles) --------
 const charms=new THREE.Group(); scene.add(charms);
