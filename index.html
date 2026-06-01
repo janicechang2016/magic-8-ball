@@ -170,7 +170,7 @@ function canvasTex(size,draw){
 }
 
 // ---- 5. THE WINDOW (bedazzled round compact) ---------------
-const eye=new THREE.Group(); eye.position.set(0,-0.02,1.01); orb.add(eye);
+const eye=new THREE.Group(); eye.position.set(0,-0.02,1.01); eye.scale.setScalar(0.4); orb.add(eye);
 
 // 5a. glossy magenta glass
 const glass=new THREE.Mesh(new THREE.CircleGeometry(0.5,72),
@@ -199,7 +199,7 @@ function drawIdle(){
 // 5c. answer plate (marker-sticker reveal)
 const ans=canvasTex(768,()=>{});
 const ansMat=new THREE.MeshBasicMaterial({map:ans.tex,transparent:true,opacity:0,depthWrite:false});
-const ansPlane=new THREE.Mesh(new THREE.PlaneGeometry(0.41,0.41),ansMat); ansPlane.position.z=0.025; eye.add(ansPlane);
+const ansPlane=new THREE.Mesh(new THREE.PlaneGeometry(0.82,0.82),ansMat); ansPlane.position.z=0.025; eye.add(ansPlane);
 function wrap(t,m){const w=t.split(' ');let L=[],l='';for(const x of w){if((l+' '+x).trim().length>m){L.push(l.trim());l=x;}else l+=' '+x;}if(l.trim())L.push(l.trim());return L;}
 function drawAnswer(text,blur){
   const ctx=ans.ctx,s=768; ctx.clearRect(0,0,s,s);
