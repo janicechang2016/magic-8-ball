@@ -421,10 +421,34 @@ const THRESH=18; let lastShake=0;
 function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
   const m=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z),now=performance.now();
   if(m>THRESH&&now-lastShake>1200){lastShake=now;ask();}}
+function reset(){
+  state=S.IDLE; asked=false; pending='';
+  orb.rotation.set(0,0,0); orb.position.set(0,0,0); orb.scale.setScalar(1);
+  overlay.style.transform='';
+  setOverlay('idle');
+  overlayAns.innerHTML='';
+  hint.textContent='';
+  questionInput.value='';
+}
+const mb=document.getElementById('motion');
+function becomeResetButton(){
+  mb.textContent='Reset'; mb.style.display='block';
+  mb.addEventListener('click',reset);
+}
 if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
-  const mb=document.getElementById('motion');mb.style.display='block';
-  mb.addEventListener('click',async()=>{try{if(await DeviceMotionEvent.requestPermission()==='granted'){window.addEventListener('devicemotion',onMotion);mb.style.display='none';}}catch(_){}});
-}else if(typeof DeviceMotionEvent!=='undefined'){window.addEventListener('devicemotion',onMotion);}
+  // iOS: Enable motion → after permission grant, become Reset
+  mb.style.display='block';
+  const onEnable=async()=>{try{if(await DeviceMotionEvent.requestPermission()==='granted'){
+    window.addEventListener('devicemotion',onMotion);
+    mb.removeEventListener('click',onEnable);
+    becomeResetButton();
+  }}catch(_){}};
+  mb.addEventListener('click',onEnable);
+}else{
+  // Non-iOS or no DeviceMotion: skip the permission gate, show Reset directly
+  if(typeof DeviceMotionEvent!=='undefined') window.addEventListener('devicemotion',onMotion);
+  becomeResetButton();
+}
 
 // ---- 9. RENDER LOOP ----------------------------------------
 function loop(now){
