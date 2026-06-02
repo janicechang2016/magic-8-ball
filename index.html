@@ -91,12 +91,11 @@
   }
   #answer-overlay.answering .tri{
     display:flex;
-    animation:triangle-flip 950ms cubic-bezier(.22,.61,.36,1) both;
+    animation:triangle-flip 550ms cubic-bezier(.22,.61,.36,1) both;
   }
   @keyframes triangle-flip{
-    0%   { transform:translateX(-50%) rotateX(-160deg) scale(.86); opacity:0; }
-    40%  { opacity:1; }
-    100% { transform:translateX(-50%) rotateX(0) scale(1); opacity:1; }
+    0%   { transform:translateX(-50%) scale(.65); opacity:0; }
+    100% { transform:translateX(-50%) scale(1); opacity:1; }
   }
   #answer-overlay .ans{
     font-size:calc(clamp(14px,3.2vmin,22px) * var(--ans-scale,1));
@@ -401,7 +400,7 @@ for(let i=0;i<18;i++){
 // ---- 7. STATE MACHINE --------------------------------------
 const S={IDLE:0,WAKING:1,REVEAL:2}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
 const WAKE_MS=1500, REVEAL_MS=3800; const hint=document.getElementById('hint');
-const REVEAL_BASE_DELAY_MS=620;
+const REVEAL_BASE_DELAY_MS=360;
 let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING) return;
