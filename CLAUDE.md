@@ -25,14 +25,15 @@ A Magic 8 Ball web app: **classic black plastic 8-ball look + snarky Y2K voice +
 - iOS DeviceMotion shake (`magnitude > 18`, 1.2s cooldown) also fires `ask()`. Permission gated via the "Enable motion" button on iOS 13+; on grant, the button rewires into a **Reset** that snaps the ball back to its landing state.
 - On non-iOS, motion is auto-registered and the **Reset** button shows immediately.
 - **Shake hint toast (`#shake-toast`):** a one-time Y2K pink sticker ("psst — shake your phone bestie 🤳") floats just above the input/button stack on **mobile only**. It's shown via `showShakeToast()` *only once motion is actually live* — immediately on Android, after the iOS permission grant — so it never tells the user to shake before shaking works. `dismissShakeToast()` (called at the top of `ask()`) fades it out on the first shake/tap/Enter and it does not return. Gated by `isTouch = matchMedia('(pointer: coarse)')` + `toastShown`/`toastDismissed` flags.
-- The typed question doesn't affect the answer (still random from `ANSWERS`) — it's pure ritual.
+- The typed question doesn't affect the answer (random from the active set — `ANSWERS` or `REHAB`) — it's pure ritual.
 
 ### Locked content
 - **21 custom snarky answers** in `ANSWERS` (block 1, default side). Keep the deranged-but-affectionate voice.
-- **12 "say this, not that" pairs** in `REHAB` (block 1b, rehab side) — `{bad, good}`. Sincere-but-cheeky EQ coaching; keep them short enough to fit the triangle.
-- **Single wake line:** `consulting my extremely worn thin patience`. Don't randomize — this is the only one.
-- **Post-reveal hint:** `it has spoken ♥`.
-- **Title / home-screen name** (all): `my dumbass boyfriend magic 8 ball`.
+- **12 "say this, not that" pairs** in `REHAB` (block 1b, rehab side) — `{bad, good}`. Only `good` is shown (the EQ rewrite). Sincere-but-cheeky; keep them short enough to fit the triangle.
+- **Per-side wake line** (`THEMES[mode].wake`, single each — don't randomize): default `consulting my extremely worn thin patience`; rehab `buffering emotional intelligence`.
+- **Per-side post-reveal hint** (`THEMES[mode].hint`): default `it has spoken ♥`; rehab `character development ♥`.
+- **Per-side title / masthead** (`THEMES[mode].title`): default `my dumbass boyfriend magic 8 ball`; rehab `EQ-ing my chungus boyfriend magic 8 ball`. The **home-screen / PWA name** stays `my dumbass boyfriend magic 8 ball` (manifest + meta, not theme-swapped).
+- **Per-side kicker / stickers / link** also live in `THEMES` (block 1b): default kicker "send his dumbass to the stratosphere girl <3", stickers `100% ACCURATE*` / `so kawaii~~` / `*results may vary`, link "send his dumbass to rehab →"; rehab kicker "teaching his dumbass to communicate <3", stickers `*put him in his place!` / `growth king~~` / `*progress not guaranteed`, link "← ugh, lost cause".
 
 ---
 
@@ -83,6 +84,13 @@ ask() ──► state=WAKING ──── 1500ms ────► state=REVEAL �
 - Char-by-char stream: each `.char` span animates `char-reveal` — opacity 0→1, filter `blur(14px) brightness(2.5)` → `blur(0) brightness(1)` — 600ms cubic-bezier(.2,.7,.3,1). Stagger 80ms per char, **base delay 360ms** so chars start streaming as the triangle settles.
 - **Font auto-scale by length:** `showAnswerHTML` reads `text.length` and sets a `--ans-scale` CSS variable consumed by the `.ans` font-size. Buckets: ≤12→1.0, ≤20→.88, ≤28→.76, ≤36→.66, longer→.58.
 
+- **Per-side hint:** at REVEAL end the hint flips to `currentHint` (`THEMES[mode].hint`), not a hardcoded string.
+- **Rehab font fit:** `showRehabAnswer()` sets a length-based starting `--ans-scale`, then `fitAnswerToTriangle()` caps the text to a safe inscribed box near the wide top of the inverted triangle (`maxWidth ≈ 56% of tri width`, `maxH ≈ 34% of tri height`) and steps the scale down until it fits — so even long answers never clip on a 150px mobile window. Default answers keep the simple length-bucket scale in `showAnswerHTML` (no fit pass).
+
+### FLIPPING (1500ms) — switching sides
+- Triggered by `flipSide(targetMode)` (via `#side-link` → hash → `hashchange`). Same -360° X turn-over math as WAKING, but it does **not** reveal an answer.
+- At the **midpoint (p≥0.5, backface hidden)** it calls `applyTheme(pendingMode)` once (`flipSwapped` guard) so the theme/masthead/sticker swap happens unseen, then lands on IDLE (the "8" window) on the new side.
+
 ### Reset
 - The Reset button (formerly "Enable motion") clears everything: state→IDLE, asked=false, pending='', orb transform reset, overlay class→`.idle`, answer chars/hint/question input all cleared. Lands the user back at the white "8" window.
 
@@ -112,17 +120,19 @@ Reference images that are NOT in git: `magazine-lettering.webp`, `8ballinspo.jpe
 
 | # | Block | Notes |
 |---|-------|-------|
-| 1 | Answers | `ANSWERS` (20) + `WAKE_LINES` (single) — what ports to firmware |
+| 1 | Answers | `ANSWERS` (21) + `WAKE_LINES` (legacy single, unused) — what ports to firmware |
+| 1b | Rehab content + themes | `REHAB` (12 `{bad,good}` pairs) + `THEMES` config (per-side title/kicker/badge/tag/rmv/link/linkHref/wake/hint) |
 | 2 | Scene | camera (FOV 38°, portrait z=6.2, landscape z=4.2), `WebGLRenderer({alpha:true})` |
 | 3 | Lights | neutral warm (ambient + key + 2 fills) — toned down for the black plastic |
 | 4 | Shell | black `MeshPhysicalMaterial` (#0e0e0e, clearcoat 1.0). One mesh, that's it. |
-| 5 | Answer window — HTML overlay handles. `setOverlay()` toggles `idle / waking / answering` classes; `showAnswerHTML()` populates chars, sets `--ans-scale`, applies `REVEAL_BASE_DELAY_MS + i·CHAR_STAGGER_MS` per-char `animationDelay`. |
+| 5 | Answer window — HTML overlay handles. `setOverlay()` toggles `idle / waking / answering`; `showAnswerHTML()` (default, length-bucket scale) + `streamChars()` + `showRehabAnswer()` (rehab, calls `fitAnswerToTriangle()`) + `revealPending()` dispatcher. |
 | 6 | Charms | floating heart/star/sparkle sprites. ALL positioned at `bz` between -1.6 and -3.4 (behind orb's back face). The orbital `charms.rotation.y` was removed so sprites never rotate around into z > 0 (i.e., in front of the orb). |
-| 7 | State machine | `IDLE / WAKING / REVEAL`. Unified turn-over animation: every ASK does the same -360° X tumble with mirrored CSS rotateX on the overlay. No more first/subsequent split. |
+| 7 | State machine | `IDLE / WAKING / REVEAL / FLIPPING`. `ask()` uses `activeAnswers`/`currentWake`; every ASK does the same -360° X tumble with mirrored CSS rotateX on the overlay. |
+| 7b | Themes + side flip | `applyTheme(m)`, `flipSide(targetMode)`, `modeFromHash()` + `hashchange`. Swaps theme/answers; flip reuses the turn-over and swaps at the midpoint. |
 | 8 | Device motion + reset + shake toast | shake detection + iOS permission. `reset()` and `becomeResetButton()` rewire the motion button into a Reset action after grant (or immediately on non-iOS). `showShakeToast()`/`dismissShakeToast()` drive the mobile-only `#shake-toast` hint, fired when motion goes live and cleared on first `ask()`. |
-| 9 | Render loop | wake math, hint flip, no more canvas redraws for the window |
+| 9 | Render loop | wake math + FLIPPING branch (midpoint theme swap), per-side hint flip, `revealPending()` at WAKING→REVEAL |
 | 10 | Resize | recomputes `pxPerWorld = h / (2 · camera.z · tan(vFov/2))` for shake-tracking |
-| 11 | Answer overlay JS | `setOverlay`, `showAnswerHTML`, char-by-char span construction with `--ans-scale` |
+| 11 | Answer overlay JS | (lives in block 5 region) `setOverlay`, `showAnswerHTML`, `streamChars`, `showRehabAnswer`, `fitAnswerToTriangle`, `revealPending` |
 | 12 | PWA | `navigator.serviceWorker.register('./sw.js')` |
 
 ---
@@ -175,8 +185,10 @@ Background and box-shadow on `#answer-overlay` use a 500ms ease transition; both
 ## Next steps
 
 1. ~~Lock answers, copy, theme, PWA, deploy~~ — **DONE.**
-2. **Finish smoke test.** Desktop ✓. Still TODO: mobile browser shake on a real phone (motion permission + Reset relabel; confirm ASK button is hidden), PWA install (Add to Home Screen → standalone launch), offline (airplane-mode launch of installed PWA).
-3. **Polish:** `navigator.vibrate()` is already wired in `ask()`; consider `prefers-reduced-motion` fallback (no flip / no wobble), loading state while Three.js CDN loads, optional echo of the typed question somewhere during reveal.
+1b. ~~Add the "boyfriend rehab" second side (themes, flip transition, EQ "say this, not that" answers, responsive side-link)~~ — **DONE & deployed.**
+2. **Finish smoke test.** Desktop ✓ (default + rehab flip). Still TODO on a real phone: shake/motion (iOS permission, Android auto), confirm ASK hidden + shake toast, **the rehab flip both directions + `#rehab` deep-link + rehab answer legibility/fit**, PWA install (Add to Home Screen → standalone), offline (airplane-mode launch).
+3. **Open follow-ups flagged but not done:** (a) the flip's theme swap is **instant at the midpoint** — could add a crossfade if it reads abrupt; (b) the rehab **blue wash** is a tint over the same pink magazine photo — could push bluer or use a different bg if it doesn't read "calm" enough; (c) the mobile rehab side-link is hot/blue text on a white **dashed** outline over a busy photo — add a subtle fill if it reads faint.
+4. **Polish:** `navigator.vibrate()` is wired in `ask()` (and a `[15,30,15]` pattern in `flipSide()`); consider `prefers-reduced-motion` fallback (no flip / no wobble), loading state while Three.js CDN loads, optional echo of the typed question during reveal.
 4. **Iteration 3 — physical ball:**
    - **MCU:** ESP32 (Wi-Fi, drives display, reads sensor)
    - **Display:** round IPS LCD (e.g. GC9A01 240×240) behind the window
