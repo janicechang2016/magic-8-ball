@@ -134,6 +134,7 @@ Background and box-shadow on `#answer-overlay` use a 500ms ease transition; both
 ## Mobile considerations
 
 - Portrait camera z=6.2 (was 4.7) so the orb takes ~50% viewport height instead of ~62%.
+- **Background must NOT use `background-attachment: fixed`** — on iOS Safari that sizes the cover image to the layout viewport and leaves a white bar at the bottom (the dynamic toolbar / home-indicator gap). The body bg uses plain `center/cover` (no `fixed`), the page is sized with `height:100dvh` (dynamic viewport units), and `html` has a `var(--paper-warm)` cream fallback so no white can show through even if a sliver of gap remains.
 - `*results may vary` sticker has `.rmv` class with a media query bumping `bottom` from ~108px to ~248px to clear the input + ASK + Reset stack at ≤600px wide.
 - Procedural magazine `.strip / .issue / .pgnum` fragments are hidden everywhere via `#mag-bg{display:none}` since the photo replaced them — but the CSS is retained for easy revert.
 - Question input has `autocomplete="off"` and blurs itself on Enter so the iOS keyboard dismisses.
