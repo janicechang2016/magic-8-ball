@@ -16,12 +16,12 @@ A Magic 8 Ball web app: **classic black plastic 8-ball look + snarky Y2K voice +
 - **Stickers (decor):** `100% ACCURATE*` badge, `so kawaii~~` tag, butterfly/heart emoji decals, `*results may vary` cream-paper sticker (positioned high on mobile via `.rmv` media query to clear the input + ASK button).
 - **Orb:** glossy **black** `MeshPhysicalMaterial` (#0e0e0e, clearcoat 1.0). Neutral warm lights instead of the original candy multi-hue.
 - **Window (the "center feature"):** an **HTML overlay** centered on the viewport — circular white-to-cream div with a bold black serif "8" (Bodoni Moda 900). On `.waking` and `.answering`, the bg transitions to deep navy (#0a1340 → #02041a) and the "8" fades out. The dark-navy inverted-triangle clip-path element scales/fades in (no rotation), and luminescent white answer text staggers in on top.
-- **Bottom UI:** cream paper `#hint` label (only renders when non-empty), italic Bodoni question input with `ask the ball…` placeholder, italic pink **ASK** button (**desktop only** — hidden on touch devices via `@media (pointer: coarse)`), small **Reset** button (always shown on both desktop and mobile).
+- **Bottom UI:** cream paper `#hint` label (only renders when non-empty), italic Bodoni question input with `ask the ball…` placeholder, italic pink **ASK** button (**desktop only** — hidden on touch devices via `@media (pointer: coarse)`), small cream-sticker **Reset** button (cream `#fff6d8` fill, magenta text + border, kawaii-sticker style) — labeled "Enable motion" on iOS until permission is granted.
 
 ### What it does
 - Tap/click orb, click ASK (desktop), or press Enter in the input → `ask()`.
-- DeviceMotion shake (`magnitude > 18`, 1.2s cooldown) also fires `ask()`. **Motion is mobile-only and auto-enabled — there is no "Enable motion" button anymore.** On Android (no permission gate) it registers immediately on load. On iOS 13+ (which requires `requestPermission()` from inside a user gesture) `enableMotion()` is folded into `ask()`, so the OS prompt rides on the user's first orb tap. `motionReady` guards against re-requesting.
-- The **Reset** button is always visible on both desktop and mobile; it snaps the ball back to its landing state.
+- iOS DeviceMotion shake (`magnitude > 18`, 1.2s cooldown) also fires `ask()`. Permission gated via the "Enable motion" button on iOS 13+; on grant, the button rewires into a **Reset** that snaps the ball back to its landing state.
+- On non-iOS, motion is auto-registered and the **Reset** button shows immediately.
 - The typed question doesn't affect the answer (still random from `ANSWERS`) — it's pure ritual.
 
 ### Locked content
@@ -69,7 +69,7 @@ ask() ──► state=WAKING ──── 1500ms ────► state=REVEAL �
 - **Font auto-scale by length:** `showAnswerHTML` reads `text.length` and sets a `--ans-scale` CSS variable consumed by the `.ans` font-size. Buckets: ≤12→1.0, ≤20→.88, ≤28→.76, ≤36→.66, longer→.58.
 
 ### Reset
-- The Reset button clears everything: state→IDLE, asked=false, pending='', orb transform reset, overlay class→`.idle`, answer chars/hint/question input all cleared. Lands the user back at the white "8" window. It's wired directly to `reset()` at load — no longer doubles as an "Enable motion" button.
+- The Reset button (formerly "Enable motion") clears everything: state→IDLE, asked=false, pending='', orb transform reset, overlay class→`.idle`, answer chars/hint/question input all cleared. Lands the user back at the white "8" window.
 
 ---
 
@@ -104,7 +104,7 @@ Reference images that are NOT in git: `magazine-lettering.webp`, `8ballinspo.jpe
 | 5 | Answer window — HTML overlay handles. `setOverlay()` toggles `idle / waking / answering` classes; `showAnswerHTML()` populates chars, sets `--ans-scale`, applies `REVEAL_BASE_DELAY_MS + i·CHAR_STAGGER_MS` per-char `animationDelay`. |
 | 6 | Charms | floating heart/star/sparkle sprites. ALL positioned at `bz` between -1.6 and -3.4 (behind orb's back face). The orbital `charms.rotation.y` was removed so sprites never rotate around into z > 0 (i.e., in front of the orb). |
 | 7 | State machine | `IDLE / WAKING / REVEAL`. Unified turn-over animation: every ASK does the same -360° X tumble with mirrored CSS rotateX on the overlay. No more first/subsequent split. |
-| 8 | Device motion + reset | mobile-only shake detection, auto-enabled. `IS_MOBILE = matchMedia('(pointer: coarse)')`. `enableMotion()` registers the listener — immediately on Android, or on the first `ask()` gesture for iOS (`needsMotionPermission`). The `#motion` button is wired straight to `reset()` at load. |
+| 8 | Device motion + reset | shake detection + iOS permission. `reset()` and `becomeResetButton()` rewire the motion button into a Reset action after grant (or immediately on non-iOS). |
 | 9 | Render loop | wake math, hint flip, no more canvas redraws for the window |
 | 10 | Resize | recomputes `pxPerWorld = h / (2 · camera.z · tan(vFov/2))` for shake-tracking |
 | 11 | Answer overlay JS | `setOverlay`, `showAnswerHTML`, char-by-char span construction with `--ans-scale` |
@@ -137,7 +137,7 @@ Background and box-shadow on `#answer-overlay` use a 500ms ease transition; both
 - Procedural magazine `.strip / .issue / .pgnum` fragments are hidden everywhere via `#mag-bg{display:none}` since the photo replaced them — but the CSS is retained for easy revert.
 - Question input has `autocomplete="off"` and blurs itself on Enter so the iOS keyboard dismisses.
 - **The ASK button is hidden on touch devices** (`@media (pointer: coarse){ #shake{display:none} }`) — on mobile you tap the orb or shake the phone. Desktop keeps the ASK button.
-- Motion auto-enables on mobile (see "What it does"); there's no "Enable motion" button. On iOS the OS permission prompt appears on the first orb tap, since Apple requires a user gesture — this is the closest to "automatic" iOS allows.
+- On iOS, the Reset button text starts as "Enable motion" until the user grants permission; then the same button instance is rewired to call `reset()` with the label changed.
 
 ---
 
@@ -156,7 +156,7 @@ Background and box-shadow on `#answer-overlay` use a 500ms ease transition; both
 ## Next steps
 
 1. ~~Lock answers, copy, theme, PWA, deploy~~ — **DONE.**
-2. **Finish smoke test.** Desktop ✓. Still TODO: mobile browser shake on a real phone (confirm iOS permission prompt fires on first orb tap and motion auto-works on Android; confirm ASK button is hidden), PWA install (Add to Home Screen → standalone launch), offline (airplane-mode launch of installed PWA).
+2. **Finish smoke test.** Desktop ✓. Still TODO: mobile browser shake on a real phone (motion permission + Reset relabel; confirm ASK button is hidden), PWA install (Add to Home Screen → standalone launch), offline (airplane-mode launch of installed PWA).
 3. **Polish:** `navigator.vibrate()` is already wired in `ask()`; consider `prefers-reduced-motion` fallback (no flip / no wobble), loading state while Three.js CDN loads, optional echo of the typed question somewhere during reveal.
 4. **Iteration 3 — physical ball:**
    - **MCU:** ESP32 (Wi-Fi, drives display, reads sensor)
