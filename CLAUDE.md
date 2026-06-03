@@ -22,6 +22,7 @@ A Magic 8 Ball web app: **classic black plastic 8-ball look + snarky Y2K voice +
 - Tap/click orb, click ASK (desktop), or press Enter in the input → `ask()`.
 - iOS DeviceMotion shake (`magnitude > 18`, 1.2s cooldown) also fires `ask()`. Permission gated via the "Enable motion" button on iOS 13+; on grant, the button rewires into a **Reset** that snaps the ball back to its landing state.
 - On non-iOS, motion is auto-registered and the **Reset** button shows immediately.
+- **Shake hint toast (`#shake-toast`):** a one-time Y2K pink sticker ("psst — shake your phone bestie 🤳") floats just above the input/button stack on **mobile only**. It's shown via `showShakeToast()` *only once motion is actually live* — immediately on Android, after the iOS permission grant — so it never tells the user to shake before shaking works. `dismissShakeToast()` (called at the top of `ask()`) fades it out on the first shake/tap/Enter and it does not return. Gated by `isTouch = matchMedia('(pointer: coarse)')` + `toastShown`/`toastDismissed` flags.
 - The typed question doesn't affect the answer (still random from `ANSWERS`) — it's pure ritual.
 
 ### Locked content
@@ -104,7 +105,7 @@ Reference images that are NOT in git: `magazine-lettering.webp`, `8ballinspo.jpe
 | 5 | Answer window — HTML overlay handles. `setOverlay()` toggles `idle / waking / answering` classes; `showAnswerHTML()` populates chars, sets `--ans-scale`, applies `REVEAL_BASE_DELAY_MS + i·CHAR_STAGGER_MS` per-char `animationDelay`. |
 | 6 | Charms | floating heart/star/sparkle sprites. ALL positioned at `bz` between -1.6 and -3.4 (behind orb's back face). The orbital `charms.rotation.y` was removed so sprites never rotate around into z > 0 (i.e., in front of the orb). |
 | 7 | State machine | `IDLE / WAKING / REVEAL`. Unified turn-over animation: every ASK does the same -360° X tumble with mirrored CSS rotateX on the overlay. No more first/subsequent split. |
-| 8 | Device motion + reset | shake detection + iOS permission. `reset()` and `becomeResetButton()` rewire the motion button into a Reset action after grant (or immediately on non-iOS). |
+| 8 | Device motion + reset + shake toast | shake detection + iOS permission. `reset()` and `becomeResetButton()` rewire the motion button into a Reset action after grant (or immediately on non-iOS). `showShakeToast()`/`dismissShakeToast()` drive the mobile-only `#shake-toast` hint, fired when motion goes live and cleared on first `ask()`. |
 | 9 | Render loop | wake math, hint flip, no more canvas redraws for the window |
 | 10 | Resize | recomputes `pxPerWorld = h / (2 · camera.z · tan(vFov/2))` for shake-tracking |
 | 11 | Answer overlay JS | `setOverlay`, `showAnswerHTML`, char-by-char span construction with `--ans-scale` |
@@ -138,6 +139,7 @@ Background and box-shadow on `#answer-overlay` use a 500ms ease transition; both
 - Question input has `autocomplete="off"` and blurs itself on Enter so the iOS keyboard dismisses.
 - **The ASK button is hidden on touch devices** (`@media (pointer: coarse){ #shake{display:none} }`) — on mobile you tap the orb or shake the phone. Desktop keeps the ASK button.
 - On iOS, the Reset button text starts as "Enable motion" until the user grants permission; then the same button instance is rewired to call `reset()` with the label changed.
+- The `#shake-toast` shake hint is **mobile-only and motion-gated** (only shown once `devicemotion` is registered), so it never appears on desktop and never prompts a shake before iOS permission is granted. Positioned `bottom:195px` to float above the input + button stack. One-time per page load — does not reappear on Reset.
 
 ---
 

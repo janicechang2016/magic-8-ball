@@ -228,6 +228,29 @@
   @media (max-width:600px){
     .sticker.rmv{bottom:calc(248px + env(safe-area-inset-bottom));right:4%;}
   }
+
+  /* ===== shake hint toast (mobile) ===== */
+  .shake-toast{
+    position:fixed; left:50%; bottom:calc(195px + env(safe-area-inset-bottom)); z-index:11;
+    transform:translateX(-50%); display:none; opacity:0;
+    font-family:'Permanent Marker',cursive; font-size:15px; color:#fff; white-space:nowrap;
+    background:linear-gradient(180deg,#ff8ec6 0%, var(--hot) 60%, var(--magenta) 100%);
+    padding:9px 20px; border-radius:18px; border:2px solid #fff; letter-spacing:.02em;
+    box-shadow:0 4px 0 var(--ink), 0 10px 20px rgba(138,10,79,.42); pointer-events:none;
+  }
+  .shake-toast::after{
+    content:""; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%) rotate(45deg);
+    width:12px; height:12px; background:var(--magenta); border-right:2px solid #fff; border-bottom:2px solid #fff;
+  }
+  .shake-toast .hand{display:inline-block; animation:toast-hand .5s ease-in-out infinite;}
+  .shake-toast.show{ display:block;
+    animation:toast-pop .5s cubic-bezier(.2,1.4,.4,1) both, toast-wiggle 1.8s ease-in-out .55s infinite; }
+  .shake-toast.hide{ animation:toast-out .3s ease forwards; }
+  @keyframes toast-pop{ from{opacity:0; transform:translateX(-50%) scale(.6) translateY(10px);}
+                        to{opacity:1; transform:translateX(-50%) scale(1) translateY(0);} }
+  @keyframes toast-out{ to{opacity:0; transform:translateX(-50%) scale(.85) translateY(6px);} }
+  @keyframes toast-wiggle{ 0%,100%{rotate:-2.5deg;} 50%{rotate:1.5deg;} }
+  @keyframes toast-hand{ 0%,100%{transform:translateX(-2px) rotate(-12deg);} 50%{transform:translateX(2px) rotate(12deg);} }
 </style>
 </head>
 <body>
@@ -280,6 +303,9 @@
   <div class="sticker deco"  style="top:62%;right:9%;transform:rotate(8deg);">&#129419;</div>
   <div class="sticker deco"  style="top:58%;left:7%;transform:rotate(-12deg);">&#128150;</div>
   <div class="sticker rmv">*results may vary</div>
+
+  <!-- shake hint (mobile, motion-gated, one-time) -->
+  <div id="shake-toast" class="shake-toast" aria-hidden="true">psst &mdash; shake your phone bestie <span class="hand">&#129331;</span></div>
 
   <div id="ui">
     <p id="hint"></p>
@@ -406,6 +432,7 @@ const REVEAL_BASE_DELAY_MS=360;
 let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING) return;
+  dismissShakeToast();
   state=S.WAKING; t0=performance.now(); asked=true;
   pending=ANSWERS[Math.floor(Math.random()*ANSWERS.length)];
   spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
@@ -423,6 +450,16 @@ const THRESH=18; let lastShake=0;
 function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
   const m=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z),now=performance.now();
   if(m>THRESH&&now-lastShake>1200){lastShake=now;ask();}}
+
+// Shake hint toast — mobile only, shown once motion is actually live (right away on
+// Android; after the iOS permission grant). Dismissed on the first ask (shake/tap/Enter).
+const isTouch=window.matchMedia('(pointer: coarse)').matches;
+const shakeToast=document.getElementById('shake-toast');
+let toastShown=false, toastDismissed=false;
+function showShakeToast(){ if(!isTouch||toastShown||toastDismissed)return; toastShown=true; shakeToast.classList.add('show'); }
+function dismissShakeToast(){ if(!toastShown||toastDismissed)return; toastDismissed=true;
+  shakeToast.classList.remove('show'); shakeToast.classList.add('hide');
+  setTimeout(()=>{shakeToast.style.display='none';},320); }
 function reset(){
   state=S.IDLE; asked=false; pending='';
   orb.rotation.set(0,0,0); orb.position.set(0,0,0); orb.scale.setScalar(1);
@@ -444,11 +481,12 @@ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermi
     window.addEventListener('devicemotion',onMotion);
     mb.removeEventListener('click',onEnable);
     becomeResetButton();
+    showShakeToast();   // motion is live now — safe to tell them to shake
   }}catch(_){}};
   mb.addEventListener('click',onEnable);
 }else{
   // Non-iOS or no DeviceMotion: skip the permission gate, show Reset directly
-  if(typeof DeviceMotionEvent!=='undefined') window.addEventListener('devicemotion',onMotion);
+  if(typeof DeviceMotionEvent!=='undefined'){ window.addEventListener('devicemotion',onMotion); showShakeToast(); }
   becomeResetButton();
 }
 
