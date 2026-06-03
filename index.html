@@ -34,9 +34,11 @@
     --mag-red:#c8221c;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  /* dvh tracks the real (dynamic) mobile viewport; cream html bg is a safety net
-     so no white can ever show through behind the cover image. */
-  html{background:var(--paper-warm);}
+  /* Put the photo on the ROOT element too: the browser propagates the root
+     background across the whole canvas, including the iOS safe areas behind the
+     status bar / home indicator — which a position:fixed layer does NOT cover.
+     dvh tracks the dynamic viewport; cream stays as a load-failure fallback. */
+  html{background:url('./magazine-inspo.webp') center center / cover no-repeat var(--paper-warm);}
   html,body{height:100%;height:100dvh;overflow:hidden;}
   body{
     font-family:'Fredoka',system-ui,sans-serif;
