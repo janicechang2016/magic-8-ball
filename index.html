@@ -317,18 +317,6 @@
   }
   #side-link:active{transform:rotate(-1.5deg) scale(.94);}
 
-  /* rehab "say this, not that" reveal — struck-through instinct + glowing rewrite */
-  #answer-overlay .ans .bad{
-    display:block;font-size:.6em;line-height:1.12;opacity:0;margin-bottom:.1em;
-    color:#ffd2d2;text-decoration:line-through;text-decoration-color:rgba(255,110,110,.95);
-    text-shadow:0 1px 2px rgba(0,0,0,.5);animation:bad-in 400ms ease both;
-  }
-  #answer-overlay .ans .good{display:block;}
-  #answer-overlay .ans .good::before{
-    content:"\2193";display:block;font-size:.7em;opacity:.85;margin:.02em 0 .14em;
-    animation:bad-in 400ms ease .12s both;
-  }
-  @keyframes bad-in{ from{opacity:0;} to{opacity:1;} }
 </style>
 </head>
 <body>
@@ -538,14 +526,11 @@ function streamChars(container,text,baseDelay){
 // rehab reveal: struck-through instinct on top, glowing EQ rewrite streaming in below
 function showRehabAnswer(pair){
   overlayAns.innerHTML='';
+  overlayAns.style.maxWidth='';
   const len=pair.good.length;
-  const scale = len<=24?0.66 : len<=34?0.58 : len<=46?0.5 : 0.44;
+  const scale = len<=20?1.0 : len<=30?0.85 : len<=42?0.72 : 0.6;
   overlayAns.style.setProperty('--ans-scale',scale);
-  const bad=document.createElement('span'); bad.className='bad'; bad.textContent='\u201c'+pair.bad+'\u201d';
-  overlayAns.appendChild(bad);
-  const good=document.createElement('span'); good.className='good';
-  streamChars(good,pair.good,REVEAL_BASE_DELAY_MS+260);   // start after the bad line + arrow land
-  overlayAns.appendChild(good);
+  streamChars(overlayAns, pair.good, REVEAL_BASE_DELAY_MS);   // only the EQ rewrite \u2014 no struck-through line
   setOverlay('answering');
   fitAnswerToTriangle();   // guarantee it stays inside the triangle, esp. on small mobile windows
 }
@@ -557,8 +542,8 @@ function fitAnswerToTriangle(){
   const tri=overlay.querySelector('.tri');
   const W=tri.clientWidth, H=tri.clientHeight;
   if(!W||!H) return;
-  overlayAns.style.maxWidth=(W*0.52)+'px';
-  const maxH=H*0.38;
+  overlayAns.style.maxWidth=(W*0.56)+'px';
+  const maxH=H*0.34;
   let scale=parseFloat(overlayAns.style.getPropertyValue('--ans-scale'))||1;
   let g=0;
   while(overlayAns.scrollHeight>maxH+1 && scale>0.26 && g<22){
