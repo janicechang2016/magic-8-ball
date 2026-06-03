@@ -194,6 +194,8 @@
     box-shadow:0 6px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35), 0 14px 26px rgba(138,10,79,.4);
   }
   #shake:active{box-shadow:0 2px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35);}
+  /* Mobile (touch): no ASK button — tap the orb or shake the phone instead. */
+  @media (pointer: coarse){ #shake{display:none;} }
   #motion{font-size:12px;padding:8px 18px;display:none;background:rgba(255,255,255,.22);border-width:2px;}
   #question{
     pointer-events:auto;
@@ -283,7 +285,7 @@
     <p id="hint"></p>
     <input id="question" type="text" placeholder="ask the ball..." maxlength="100" autocomplete="off" />
     <button id="shake" class="btn">Ask</button>
-    <button id="motion" class="btn">Enable motion</button>
+    <button id="motion" class="btn">Reset</button>
   </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -306,7 +308,7 @@ const ANSWERS = [
   "no, he is a dumbass","go kick rocks","pull the victim tampon out of your ass",
   "stfu","go write about it in your diary bitch",
   "ask again","fuck around and find out","do you enjoy being a clown?",
-  "feminism died today","greyrock his ass girl"
+  "feminism died today","greyrock his ass girl","put him in his place"
 ];
 const WAKE_LINES = ["consulting my extremely worn thin patience"];
 
@@ -404,6 +406,7 @@ const REVEAL_BASE_DELAY_MS=360;
 let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING) return;
+  if(IS_MOBILE) enableMotion();   // iOS: requests motion permission on this gesture (no-op once granted)
   state=S.WAKING; t0=performance.now(); asked=true;
   pending=ANSWERS[Math.floor(Math.random()*ANSWERS.length)];
   spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
@@ -411,16 +414,38 @@ function ask(){
   hint.textContent=WAKE_LINES[Math.floor(Math.random()*WAKE_LINES.length)];
   if(navigator.vibrate) navigator.vibrate(30);
 }
+const IS_MOBILE=window.matchMedia('(pointer: coarse)').matches;
 document.getElementById('shake').addEventListener('click',ask);
 renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT')ask();});
 const questionInput=document.getElementById('question');
 questionInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();questionInput.blur();ask();}});
 
-// ---- 8. DEVICE MOTION --------------------------------------
+// ---- 8. DEVICE MOTION (mobile only, auto-enabled) ----------
 const THRESH=18; let lastShake=0;
 function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
   const m=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z),now=performance.now();
   if(m>THRESH&&now-lastShake>1200){lastShake=now;ask();}}
+
+// iOS 13+ requires DeviceMotionEvent.requestPermission() from inside a user gesture;
+// every other browser exposes motion with no gate. We never show an "Enable motion"
+// button — on iOS we silently piggyback the permission request on the first tap/ask
+// (enableMotion is called from ask(), which only runs inside a user gesture).
+const needsMotionPermission = typeof DeviceMotionEvent!=='undefined'
+  && typeof DeviceMotionEvent.requestPermission==='function';
+let motionReady=false;
+function enableMotion(){
+  if(motionReady||typeof DeviceMotionEvent==='undefined')return;
+  if(needsMotionPermission){
+    DeviceMotionEvent.requestPermission()
+      .then(s=>{if(s==='granted'){window.addEventListener('devicemotion',onMotion);motionReady=true;}})
+      .catch(()=>{});
+  }else{
+    window.addEventListener('devicemotion',onMotion);motionReady=true;
+  }
+}
+// Android (and any sensor-equipped non-iOS): enable right away, no gesture needed.
+if(IS_MOBILE && !needsMotionPermission) enableMotion();
+
 function reset(){
   state=S.IDLE; asked=false; pending='';
   orb.rotation.set(0,0,0); orb.position.set(0,0,0); orb.scale.setScalar(1);
@@ -430,25 +455,10 @@ function reset(){
   hint.textContent='';
   questionInput.value='';
 }
+// Reset is always available, on both desktop and mobile.
 const mb=document.getElementById('motion');
-function becomeResetButton(){
-  mb.textContent='Reset'; mb.style.display='block';
-  mb.addEventListener('click',reset);
-}
-if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
-  // iOS: Enable motion → after permission grant, become Reset
-  mb.style.display='block';
-  const onEnable=async()=>{try{if(await DeviceMotionEvent.requestPermission()==='granted'){
-    window.addEventListener('devicemotion',onMotion);
-    mb.removeEventListener('click',onEnable);
-    becomeResetButton();
-  }}catch(_){}};
-  mb.addEventListener('click',onEnable);
-}else{
-  // Non-iOS or no DeviceMotion: skip the permission gate, show Reset directly
-  if(typeof DeviceMotionEvent!=='undefined') window.addEventListener('devicemotion',onMotion);
-  becomeResetButton();
-}
+mb.textContent='Reset'; mb.style.display='block';
+mb.addEventListener('click',reset);
 
 // ---- 9. RENDER LOOP ----------------------------------------
 function loop(now){
