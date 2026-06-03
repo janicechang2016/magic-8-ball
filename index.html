@@ -306,16 +306,28 @@
   /* rehab cards carry more text — start higher in the (wider) top of the triangle */
   body.rehab #answer-overlay .tri{ padding:8% 5% 0; }
 
-  /* side-link tab — flips the ball to the other side */
+  /* side-link tab — flips the ball to the other side.
+     Desktop: a bookmark tab sticking out of the right edge.
+     Mobile (pointer:coarse): a dashed tab at the bottom of the UI stack. */
   #side-link{
+    position:fixed;right:0;top:46%;transform:translateY(-50%);z-index:12;
     pointer-events:auto;cursor:pointer;text-decoration:none;
     font-family:'Permanent Marker',cursive;font-size:13px;letter-spacing:.02em;
-    color:#fff;background:var(--hot);padding:7px 16px;border-radius:999px;
-    border:2px solid #fff;transform:rotate(-1.5deg);
+    color:#fff;background:var(--hot);padding:8px 16px;
+    border:2px solid #fff;border-right:0;border-radius:999px 0 0 999px;
     box-shadow:0 3px 0 var(--ink), 0 6px 14px rgba(0,0,0,.3);
-    transition:transform .14s ease, background .4s ease;
+    transition:background .4s ease, transform .14s ease;
   }
-  #side-link:active{transform:rotate(-1.5deg) scale(.94);}
+  #side-link:active{transform:translateY(-50%) scale(.96);}
+  @media (pointer: coarse){
+    #side-link{
+      position:static;top:auto;right:auto;order:9;z-index:auto;align-self:center;
+      transform:rotate(-1.5deg);
+      background:transparent;color:var(--hot);
+      border:2px dashed #fff;border-radius:999px;box-shadow:none;
+    }
+    #side-link:active{transform:rotate(-1.5deg) scale(.95);}
+  }
 
 </style>
 </head>
