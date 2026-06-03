@@ -2,6 +2,8 @@
 
 A Magic 8 Ball web app: **classic black plastic 8-ball look + snarky Y2K voice + Mean Girls magazine spread background**. Responsive web app → installable PWA → eventually a **physical ball with an embedded round screen**.
 
+**Two sides of one ball:** the default side is *her* snark ("my dumbass boyfriend magic 8 ball"); a second **"boyfriend rehab"** side (calm-blue theme) gives the boyfriend emotionally-intelligent **"say this, not that"** scripts. They're the same single page — a `#rehab` URL hash + a `body.rehab` theme class — and you move between them by **flipping the ball over** (reusing the wake turn-over as the transition). See "Two sides / theme system" below.
+
 - **Live:** https://magic-8-ball-nine.vercel.app/
 - **Repo:** https://github.com/janicechang2016/magic-8-ball (deploys from `main`)
 - **Hosting:** Vercel (auto-deploy on push to `main`)
@@ -26,12 +28,22 @@ A Magic 8 Ball web app: **classic black plastic 8-ball look + snarky Y2K voice +
 - The typed question doesn't affect the answer (still random from `ANSWERS`) — it's pure ritual.
 
 ### Locked content
-- **21 custom snarky answers** in `ANSWERS` (block 1). Keep the deranged-but-affectionate voice.
+- **21 custom snarky answers** in `ANSWERS` (block 1, default side). Keep the deranged-but-affectionate voice.
+- **12 "say this, not that" pairs** in `REHAB` (block 1b, rehab side) — `{bad, good}`. Sincere-but-cheeky EQ coaching; keep them short enough to fit the triangle.
 - **Single wake line:** `consulting my extremely worn thin patience`. Don't randomize — this is the only one.
 - **Post-reveal hint:** `it has spoken ♥`.
 - **Title / home-screen name** (all): `my dumbass boyfriend magic 8 ball`.
 
 ---
+
+## Two sides / theme system (the "boyfriend rehab" foil)
+
+- **Concept:** Page 1 (default) = her catharsis, snark verdicts, hot-pink Y2K. Page 2 (`#rehab`) = his redemption arc, **"say this, not that"** EQ scripts, calm-blue "rehab" theme. Same black ball, flipped over.
+- **One document, two modes.** Not a second HTML file (that would duplicate the whole Three.js engine and break the flip). A `body.rehab` class swaps CSS variables + `body::before` wash + masthead stroke; JS swaps text + the active answer set.
+- **`THEMES` config (block 1b)** holds per-side `title / kicker / badge / tag / rmv / link / linkHref / wake / hint`. `applyTheme(m)` writes those into the masthead, kicker, three stickers, and `#side-link`, and points `activeAnswers` at `ANSWERS` (default) or `REHAB` (rehab), plus sets `currentWake` / `currentHint` (read by `ask()` and the loop).
+- **`REHAB` (block 1b)** is an array of `{bad, good}` pairs. `showRehabAnswer()` renders a struck-through `.bad` instinct, a `↓` (`.good::before`), then streams the `.good` rewrite via the shared `streamChars()` glow helper. `revealPending()` dispatches: object → rehab renderer, string → `showAnswerHTML()`.
+- **The flip (block 7b + `S.FLIPPING`):** `#side-link` is an `<a href="#rehab">`/`<a href="#home">`; clicking changes the hash → `hashchange` → `flipSide(mode)`. `flipSide` runs the same -360° turn-over as WAKING; at the **midpoint (p≥0.5, backface hidden)** it calls `applyTheme(pendingMode)` so the swap is unseen, then lands on IDLE (the "8" window) on the new side. `modeFromHash()` + the initial `applyTheme(modeFromHash())` make each side a real shareable URL with working back/forward.
+- **Rehab visual:** `body.rehab` retints to calm blues (`--hot:#2f7fd6` etc.), a cool `body::before` wash, deep-blue masthead stroke. The black orb and blue answer triangle are unchanged (shared by both sides). The magazine **photo is the same** — only the wash recolors the mood (no second bg image).
 
 ## Architecture — the big pivot
 

@@ -290,6 +290,45 @@
   @keyframes toast-out{ to{opacity:0; transform:translateX(-50%) scale(.85) translateY(6px);} }
   @keyframes toast-wiggle{ 0%,100%{rotate:-2.5deg;} 50%{rotate:1.5deg;} }
   @keyframes toast-hand{ 0%,100%{transform:translateX(-2px) rotate(-12deg);} 50%{transform:translateX(2px) rotate(12deg);} }
+
+  /* ===== boyfriend rehab theme (the calm-blue "redemption" side) ===== */
+  body.rehab{
+    --bubble:#6fb1e8; --hot:#2f7fd6; --magenta:#1f6fc0;
+    --baby:#cfe6fb; --cream:#eef6ff; --lilac:#8fb8e0;
+    --ink:#0d3a6b; --mag-red:#1f6fc0;
+  }
+  body.rehab::before{
+    background:linear-gradient(170deg, rgba(200,226,248,.42), rgba(176,212,242,.5)),
+               radial-gradient(ellipse 65% 60% at 50% 55%, rgba(220,238,252,.4) 0%, transparent 55%),
+               radial-gradient(ellipse 120% 120% at 50% 50%, transparent 50%, rgba(12,30,58,.24) 100%);
+  }
+  body.rehab #masthead h1{ -webkit-text-stroke-color:#0a2a50; text-shadow:0 3px 0 #0a2a50, 4px 6px 0 rgba(8,20,40,.3); }
+  /* rehab cards carry more text — start higher in the (wider) top of the triangle */
+  body.rehab #answer-overlay .tri{ padding:8% 5% 0; }
+
+  /* side-link tab — flips the ball to the other side */
+  #side-link{
+    pointer-events:auto;cursor:pointer;text-decoration:none;
+    font-family:'Permanent Marker',cursive;font-size:13px;letter-spacing:.02em;
+    color:#fff;background:var(--hot);padding:7px 16px;border-radius:999px;
+    border:2px solid #fff;transform:rotate(-1.5deg);
+    box-shadow:0 3px 0 var(--ink), 0 6px 14px rgba(0,0,0,.3);
+    transition:transform .14s ease, background .4s ease;
+  }
+  #side-link:active{transform:rotate(-1.5deg) scale(.94);}
+
+  /* rehab "say this, not that" reveal — struck-through instinct + glowing rewrite */
+  #answer-overlay .ans .bad{
+    display:block;font-size:.6em;line-height:1.12;opacity:0;margin-bottom:.1em;
+    color:#ffd2d2;text-decoration:line-through;text-decoration-color:rgba(255,110,110,.95);
+    text-shadow:0 1px 2px rgba(0,0,0,.5);animation:bad-in 400ms ease both;
+  }
+  #answer-overlay .ans .good{display:block;}
+  #answer-overlay .ans .good::before{
+    content:"\2193";display:block;font-size:.7em;opacity:.85;margin:.02em 0 .14em;
+    animation:bad-in 400ms ease .12s both;
+  }
+  @keyframes bad-in{ from{opacity:0;} to{opacity:1;} }
 </style>
 </head>
 <body>
@@ -350,6 +389,7 @@
   <div id="shake-toast" class="shake-toast" aria-hidden="true">psst &mdash; shake your phone bestie <span class="hand">&#129331;</span></div>
 
   <div id="ui">
+    <a id="side-link" href="#rehab">send his dumbass to rehab &rarr;</a>
     <p id="hint"></p>
     <input id="question" type="text" placeholder="ask the ball..." maxlength="100" autocomplete="off" />
     <button id="shake" class="btn">Ask</button>
@@ -379,6 +419,40 @@ const ANSWERS = [
   "feminism died today","greyrock his ass girl","put him in his place"
 ];
 const WAKE_LINES = ["consulting my extremely worn thin patience"];
+
+// ---- 1b. BOYFRIEND REHAB — "say this, not that" pairs ------
+const REHAB = [
+  {bad:"you're overreacting",        good:"this clearly matters to you."},
+  {bad:"calm down",                  good:"take your time. i'm right here."},
+  {bad:"what do you want me to do?", good:"comfort, or solutions?"},
+  {bad:"i was just joking",          good:"that wasn't fair. i'm sorry."},
+  {bad:"it's not a big deal",        good:"if it matters to you, it matters to me."},
+  {bad:"you always do this",         good:"i'm overwhelmed. can we slow down?"},
+  {bad:"fine. whatever.",            good:"i need a minute, then let's finish."},
+  {bad:"why are you crying?",        good:"come here. take your time."},
+  {bad:"i didn't do anything wrong", good:"i hear that i hurt you. i'm sorry."},
+  {bad:"you're being dramatic",      good:"you're really upset. talk to me."},
+  {bad:"stop being so sensitive",    good:"your feelings make sense. thank you."},
+  {bad:"i'm fine",                   good:"i'm not fine. give me a sec."}
+];
+
+// per-side theme: masthead, kicker, stickers, link, wake line, post-reveal hint
+const THEMES = {
+  default:{
+    title:"my dumbass boyfriend magic 8 ball",
+    kicker:"send his dumbass to the stratosphere girl &lt;3",
+    badge:"100%<br>ACCURATE*", tag:"so kawaii~~", rmv:"*results may vary",
+    link:"send his dumbass to rehab &rarr;", linkHref:"#rehab",
+    wake:"consulting my extremely worn thin patience", hint:"it has spoken ♥"
+  },
+  rehab:{
+    title:"EQ-ing my chungus boyfriend magic 8 ball",
+    kicker:"teaching his dumbass to communicate &lt;3",
+    badge:"DAY<br>ONE*", tag:"growth king~~", rmv:"*progress not guaranteed",
+    link:"&larr; ugh, lost cause", linkHref:"#home",
+    wake:"buffering emotional intelligence", hint:"character development ♥"
+  }
+};
 
 // ---- 2. SCENE ----------------------------------------------
 const mount=document.getElementById('scene');
@@ -416,6 +490,7 @@ const CHAR_STAGGER_MS=80;
 function setOverlay(stateClass){overlay.classList.remove('idle','waking','answering');overlay.classList.add(stateClass);}
 function showAnswerHTML(text){
   overlayAns.innerHTML='';
+  overlayAns.style.maxWidth='';   // default side uses the full triangle width
   const len=text.length;
   const scale = len<=12?1.0 : len<=20?0.88 : len<=28?0.76 : len<=36?0.66 : 0.58;
   overlayAns.style.setProperty('--ans-scale',scale);
@@ -439,6 +514,61 @@ function showAnswerHTML(text){
     }
   });
   setOverlay('answering');
+}
+// stream `text` into `container` as per-char glow spans, starting at baseDelay ms
+function streamChars(container,text,baseDelay){
+  const words=text.split(' '); let i=0;
+  words.forEach((word,wi)=>{
+    if(word){
+      const w=document.createElement('span'); w.className='word';
+      for(const ch of word){
+        const c=document.createElement('span'); c.className='char'; c.textContent=ch;
+        c.style.animationDelay=`${baseDelay + i*CHAR_STAGGER_MS}ms`;
+        w.appendChild(c); i++;
+      }
+      container.appendChild(w);
+    }
+    if(wi<words.length-1){
+      const sp=document.createElement('span'); sp.className='char'; sp.textContent='\u00a0';
+      sp.style.animationDelay=`${baseDelay + i*CHAR_STAGGER_MS}ms`;
+      container.appendChild(sp); i++;
+    }
+  });
+}
+// rehab reveal: struck-through instinct on top, glowing EQ rewrite streaming in below
+function showRehabAnswer(pair){
+  overlayAns.innerHTML='';
+  const len=pair.good.length;
+  const scale = len<=24?0.66 : len<=34?0.58 : len<=46?0.5 : 0.44;
+  overlayAns.style.setProperty('--ans-scale',scale);
+  const bad=document.createElement('span'); bad.className='bad'; bad.textContent='\u201c'+pair.bad+'\u201d';
+  overlayAns.appendChild(bad);
+  const good=document.createElement('span'); good.className='good';
+  streamChars(good,pair.good,REVEAL_BASE_DELAY_MS+260);   // start after the bad line + arrow land
+  overlayAns.appendChild(good);
+  setOverlay('answering');
+  fitAnswerToTriangle();   // guarantee it stays inside the triangle, esp. on small mobile windows
+}
+// Shrink --ans-scale until the rehab card fits a safe inscribed box near the wide
+// TOP of the inverted triangle. The triangle only has width up top, so we cap the
+// text to a narrow centered column and the upper portion of the height, then
+// step the font down until it fits — nothing ever clips, even on a 150px window.
+function fitAnswerToTriangle(){
+  const tri=overlay.querySelector('.tri');
+  const W=tri.clientWidth, H=tri.clientHeight;
+  if(!W||!H) return;
+  overlayAns.style.maxWidth=(W*0.52)+'px';
+  const maxH=H*0.38;
+  let scale=parseFloat(overlayAns.style.getPropertyValue('--ans-scale'))||1;
+  let g=0;
+  while(overlayAns.scrollHeight>maxH+1 && scale>0.26 && g<22){
+    scale-=0.04; overlayAns.style.setProperty('--ans-scale',scale.toFixed(3)); g++;
+  }
+}
+// pick the right renderer for whatever `pending` holds (string vs {bad,good})
+function revealPending(){
+  if(pending && typeof pending==='object') showRehabAnswer(pending);
+  else showAnswerHTML(pending);
 }
 
 // ---- 6. FLOATING CHARMS (hearts / stars / sparkles) --------
@@ -468,24 +598,62 @@ for(let i=0;i<18;i++){
 }
 
 // ---- 7. STATE MACHINE --------------------------------------
-const S={IDLE:0,WAKING:1,REVEAL:2}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
+const S={IDLE:0,WAKING:1,REVEAL:2,FLIPPING:3}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
 const WAKE_MS=1500, REVEAL_MS=3800; const hint=document.getElementById('hint');
 const REVEAL_BASE_DELAY_MS=360;
 let pxPerWorld=1;
 function ask(){
-  if(state===S.WAKING) return;
+  if(state===S.WAKING||state===S.FLIPPING) return;
   dismissShakeToast();
   state=S.WAKING; t0=performance.now(); asked=true;
-  pending=ANSWERS[Math.floor(Math.random()*ANSWERS.length)];
+  pending=activeAnswers[Math.floor(Math.random()*activeAnswers.length)];
   spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
   setOverlay('waking');
-  hint.textContent=WAKE_LINES[Math.floor(Math.random()*WAKE_LINES.length)];
+  hint.textContent=currentWake;
   if(navigator.vibrate) navigator.vibrate(30);
 }
 document.getElementById('shake').addEventListener('click',ask);
 renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT')ask();});
 const questionInput=document.getElementById('question');
 questionInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();questionInput.blur();ask();}});
+
+// ---- 7b. THEMES + SIDE FLIP (two sides of one ball) --------
+const mastheadH1=document.querySelector('#masthead h1');
+const mastheadKicker=document.querySelector('#masthead .kicker');
+const badgeSticker=document.querySelector('.sticker.badge');
+const tagSticker=document.querySelector('.sticker.tag');
+const rmvSticker=document.querySelector('.sticker.rmv');
+const sideLink=document.getElementById('side-link');
+// active per-side state read by ask() (answers + wake) and the loop (hint)
+let mode='default', activeAnswers=ANSWERS, currentWake=THEMES.default.wake, currentHint=THEMES.default.hint;
+let pendingMode='default', flipSwapped=false;
+function applyTheme(m){
+  mode=m; const th=THEMES[m];
+  document.body.classList.toggle('rehab', m==='rehab');
+  mastheadH1.textContent=th.title;
+  mastheadKicker.innerHTML=th.kicker;
+  badgeSticker.innerHTML=th.badge;
+  tagSticker.textContent=th.tag;
+  rmvSticker.textContent=th.rmv;
+  sideLink.innerHTML=th.link;
+  sideLink.setAttribute('href',th.linkHref);
+  activeAnswers = m==='rehab'?REHAB:ANSWERS;
+  currentWake=th.wake; currentHint=th.hint;
+}
+// flip the ball to its other side (reuses the wake turn-over; theme swaps at the
+// midpoint, while the window's backface is hidden, so you "land" on the new side)
+function flipSide(targetMode){
+  if(targetMode===mode || state===S.WAKING || state===S.FLIPPING) return;
+  dismissShakeToast();
+  pendingMode=targetMode; flipSwapped=false;
+  state=S.FLIPPING; t0=performance.now();
+  setOverlay('idle'); overlayAns.innerHTML=''; hint.textContent='';
+  if(navigator.vibrate) navigator.vibrate([15,30,15]);
+}
+// #rehab hash makes each side a real, shareable URL; back/forward works too
+function modeFromHash(){ return location.hash==='#rehab' ? 'rehab' : 'default'; }
+window.addEventListener('hashchange',()=>{ flipSide(modeFromHash()); });
+applyTheme(modeFromHash());   // initial paint, no animation
 
 // ---- 8. DEVICE MOTION --------------------------------------
 const THRESH=18; let lastShake=0;
@@ -552,12 +720,26 @@ function loop(now){
     const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
     const rotXdeg = orb.rotation.x * 180 / Math.PI;
     overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
-    if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.REVEAL;t0=now;showAnswerHTML(pending);}
+    if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.REVEAL;t0=now;revealPending();}
+  }
+  else if(state===S.FLIPPING){
+    // same turn-over as WAKING, but it swaps the theme at the midpoint and lands
+    // back on IDLE (the "8" window) \u2014 no answer reveal.
+    const p=(now-t0)/WAKE_MS, d=1-p, ts=now*0.001;
+    const rotP = 1 - Math.pow(1-p, 2.6);
+    orb.rotation.x = -2*Math.PI*rotP;
+    orb.position.x = Math.sin(ts*7.5) * 0.045 * d;
+    orb.position.y = Math.cos(ts*6.8) * 0.055 * d;
+    const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
+    const rotXdeg = orb.rotation.x * 180 / Math.PI;
+    overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
+    if(!flipSwapped && p>=0.5){ flipSwapped=true; applyTheme(pendingMode); }   // backface hidden \u2014 swap unseen
+    if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.IDLE;}
   }
   else if(state===S.REVEAL){
     const p=Math.min((now-t0)/REVEAL_MS,1);
     orb.position.y=Math.sin(t*1.0)*0.04;
-    if(p>=1){state=S.IDLE; hint.textContent='it has spoken \u2665';}
+    if(p>=1){state=S.IDLE; hint.textContent=currentHint;}
   }
   renderer.render(scene,camera);
 }
