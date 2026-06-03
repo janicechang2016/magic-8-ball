@@ -11,7 +11,7 @@ A Magic 8 Ball web app: **classic black plastic 8-ball look + snarky Y2K voice +
 ## Current state
 
 ### What it looks like
-- **Background:** the actual scanned Y2K teen-magazine spread (`magazine-inspo.webp`, cover-fit, fixed) with a soft cream tint and radial vignette under the orb.
+- **Background:** the actual scanned Y2K teen-magazine spread (`magazine-inspo.webp`) painted full-bleed on its own `#bg-photo` layer (`cover`, sized to `100lvh`), with a soft cream tint + radial vignette layered on top via `body::before`.
 - **Masthead:** "my dumbass boyfriend magic 8 ball" in Shrikhand with hot-pink fill + deep-ink stroke. Pink-pill kicker reads "send his dumbass to the stratosphere girl <3".
 - **Stickers (decor):** `100% ACCURATE*` badge, `so kawaii~~` tag, butterfly/heart emoji decals, `*results may vary` cream-paper sticker (positioned high on mobile via `.rmv` media query to clear the input + ASK button).
 - **Orb:** glossy **black** `MeshPhysicalMaterial` (#0e0e0e, clearcoat 1.0). Neutral warm lights instead of the original candy multi-hue.
@@ -134,7 +134,7 @@ Background and box-shadow on `#answer-overlay` use a 500ms ease transition; both
 ## Mobile considerations
 
 - Portrait camera z=6.2 (was 4.7) so the orb takes ~50% viewport height instead of ~62%.
-- **Background must NOT use `background-attachment: fixed`** — on iOS Safari that sizes the cover image to the layout viewport and leaves a white bar at the bottom (the dynamic toolbar / home-indicator gap). The body bg uses plain `center/cover` (no `fixed`), the page is sized with `height:100dvh` (dynamic viewport units), and `html` has a `var(--paper-warm)` cream fallback so no white can show through even if a sliver of gap remains.
+- **Background must NOT use `background-attachment: fixed`** — on iOS Safari that sizes the cover image to the layout viewport and leaves a white bar at the bottom (the dynamic toolbar / home-indicator gap). Instead the photo lives on a dedicated `#bg-photo` fixed layer (`z-index:0`) sized to the **large viewport** (`width:100vw; height:100lvh`) with `center/cover` — `100lvh` makes the image overshoot when the toolbar collapses so it always fills, no bottom gap. The page itself is `height:100dvh`; `html` keeps a cream `var(--paper-warm)` color only as a load-failure fallback (not the normal visible state).
 - `*results may vary` sticker has `.rmv` class with a media query bumping `bottom` from ~108px to ~248px to clear the input + ASK + Reset stack at ≤600px wide.
 - Procedural magazine `.strip / .issue / .pgnum` fragments are hidden everywhere via `#mag-bg{display:none}` since the photo replaced them — but the CSS is retained for easy revert.
 - Question input has `autocomplete="off"` and blurs itself on Enter so the iOS keyboard dismisses.

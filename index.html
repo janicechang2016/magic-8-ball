@@ -40,17 +40,23 @@
   html,body{height:100%;height:100dvh;overflow:hidden;}
   body{
     font-family:'Fredoka',system-ui,sans-serif;
-    background:
-      linear-gradient(170deg, rgba(244,234,208,.28), rgba(237,224,192,.34)),
-      url('./magazine-inspo.webp') center center / cover no-repeat,
-      linear-gradient(170deg, var(--paper) 0%, var(--paper-warm) 100%);
+    background:linear-gradient(170deg, var(--paper) 0%, var(--paper-warm) 100%);
     color:var(--paper-ink);-webkit-tap-highlight-color:transparent;user-select:none;
     position:fixed;inset:0;
   }
-  /* soft vignette focusing attention on the orb */
+  /* full-bleed magazine background on its own layer, sized to the LARGE viewport
+     (100lvh) so the image always fills the screen — even when the iOS toolbar
+     collapses the cover overshoots rather than exposing a gap at the bottom. */
+  #bg-photo{
+    position:fixed;top:0;left:0;z-index:0;pointer-events:none;
+    width:100vw;height:100vh;height:100lvh;
+    background:url('./magazine-inspo.webp') center center / cover no-repeat;
+  }
+  /* cream wash + soft vignette, layered ON TOP of the photo to focus the orb */
   body::before{
     content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
-    background:radial-gradient(ellipse 65% 60% at 50% 55%, rgba(244,234,208,.35) 0%, transparent 55%),
+    background:linear-gradient(170deg, rgba(244,234,208,.28), rgba(237,224,192,.34)),
+               radial-gradient(ellipse 65% 60% at 50% 55%, rgba(244,234,208,.35) 0%, transparent 55%),
                radial-gradient(ellipse 120% 120% at 50% 50%, transparent 50%, rgba(60,40,20,.18) 100%);
   }
   #scene{position:fixed;inset:0;z-index:2;}
@@ -257,6 +263,9 @@
 </style>
 </head>
 <body>
+  <!-- full-bleed magazine photo background -->
+  <div id="bg-photo" aria-hidden="true"></div>
+
   <!-- ===== magazine spread background ===== -->
   <div id="mag-bg" aria-hidden="true">
     <div class="strip">
