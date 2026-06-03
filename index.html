@@ -105,11 +105,27 @@
     transform:translateX(-50%);
     width:82%;aspect-ratio:1.155/1;
     clip-path:polygon(0 0, 100% 0, 50% 100%);
-    background:radial-gradient(ellipse 80% 65% at 50% 22%, #4a64d0 0%, #1f33a0 45%, #0a1660 100%);
-    filter:drop-shadow(0 0 10px rgba(80,120,235,.55)) drop-shadow(0 3px 5px rgba(0,0,0,.35));
+    /* outer = beveled rim: lit along the top edge, falling to dark at the point */
+    background:linear-gradient(165deg, #6a82e8 0%, #2c44b4 40%, #101d80 76%, #0a1660 100%);
+    filter:drop-shadow(0 0 12px rgba(80,120,235,.6)) drop-shadow(0 4px 6px rgba(0,0,0,.4));
     display:none;align-items:flex-start;justify-content:center;
     padding:14% 9% 0;
     transform-origin:50% 33%;
+  }
+  /* raised inner facet — an inset triangle with a top specular highlight, so the
+     face reads as a chiseled 3D surface sitting proud of the beveled rim. */
+  #answer-overlay .tri::before{
+    content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    clip-path:polygon(6% 5%, 94% 5%, 50% 90%);
+    background:
+      radial-gradient(ellipse 60% 42% at 50% 16%, rgba(255,255,255,.45), rgba(255,255,255,0) 60%),
+      linear-gradient(172deg, #4660d2 0%, #1d31a2 52%, #0a1666 100%);
+  }
+  /* core shadow pooling toward the lower point for added depth */
+  #answer-overlay .tri::after{
+    content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    clip-path:polygon(6% 5%, 94% 5%, 50% 90%);
+    background:radial-gradient(ellipse 75% 70% at 50% 92%, rgba(0,8,40,.6), rgba(0,8,40,0) 55%);
   }
   #answer-overlay.answering .tri{
     display:flex;
@@ -120,6 +136,7 @@
     100% { transform:translateX(-50%) scale(1); opacity:1; }
   }
   #answer-overlay .ans{
+    position:relative;z-index:2;
     font-size:calc(clamp(14px,3.2vmin,22px) * var(--ans-scale,1));
     line-height:1.08;text-align:center;
     text-transform:lowercase;letter-spacing:.02em;color:#f5fbff;

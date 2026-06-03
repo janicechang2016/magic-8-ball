@@ -66,6 +66,7 @@ ask() ──► state=WAKING ──── 1500ms ────► state=REVEAL �
 
 ### REVEAL (3800ms) — the answer
 - Triangle (`.tri`) pops in via `triangle-flip` keyframes: 550ms, **scale .65 → 1, opacity 0 → 1** (no rotation — used to also flip in rotateX, but that read as a second turn-over and was removed).
+- **3D facet look (lighting only, no transform):** `.tri` is a beveled rim (directional gradient, lit top → dark point); `.tri::before` is a raised inner facet (inset clip-path triangle) with a top specular highlight; `.tri::after` pools a core shadow toward the point. `.ans` is `position:relative; z-index:2` to sit above both pseudo-layers. Kept transform-free on purpose so it doesn't reintroduce the double-turn-over.
 - Char-by-char stream: each `.char` span animates `char-reveal` — opacity 0→1, filter `blur(14px) brightness(2.5)` → `blur(0) brightness(1)` — 600ms cubic-bezier(.2,.7,.3,1). Stagger 80ms per char, **base delay 360ms** so chars start streaming as the triangle settles.
 - **Font auto-scale by length:** `showAnswerHTML` reads `text.length` and sets a `--ans-scale` CSS variable consumed by the `.ans` font-size. Buckets: ≤12→1.0, ≤20→.88, ≤28→.76, ≤36→.66, longer→.58.
 
