@@ -70,7 +70,7 @@
     width:clamp(150px,24vmin,240px);height:clamp(150px,24vmin,240px);
     transform:translate(-50%,-50%);border-radius:50%;
     background:radial-gradient(circle at 50% 32%, #ffffff 0%, #f4ecd6 75%, #d9c89e 100%);
-    box-shadow:inset 0 -8px 18px rgba(40,30,15,.35), inset 0 6px 12px rgba(255,255,255,.95), 0 8px 22px rgba(0,0,0,.45);
+    box-shadow:inset 0 -8px 18px rgba(40,30,15,.35), inset 0 6px 12px rgba(255,255,255,.95), 0 0 0 2px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.45);
     z-index:5;pointer-events:none;overflow:hidden;
     display:flex;align-items:center;justify-content:center;
     padding:clamp(10px,2.2vmin,22px);
@@ -79,10 +79,21 @@
     backface-visibility:hidden;
     transition:background 500ms ease, box-shadow 500ms ease;
   }
+  /* recessed-window ridge — a beveled rim (highlight along the top edge, shadow
+     along the bottom) that sells the window being sunk into the ball, like a real
+     8-ball. Masked to a thin ring near the circle's edge. */
+  #answer-overlay::after{
+    content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:4;
+    background:linear-gradient(180deg,
+      rgba(255,255,255,.8) 0%, rgba(255,255,255,.12) 26%,
+      rgba(0,0,0,.12) 60%, rgba(0,0,0,.62) 100%);
+    -webkit-mask:radial-gradient(circle at 50% 50%, transparent 0 70%, #000 74% 80%, transparent 84%);
+            mask:radial-gradient(circle at 50% 50%, transparent 0 70%, #000 74% 80%, transparent 84%);
+  }
   #answer-overlay.waking,
   #answer-overlay.answering{
     background:radial-gradient(circle at 50% 32%, #0a1340 0%, #050a26 75%, #02041a 100%);
-    box-shadow:inset 0 -8px 20px rgba(0,0,0,.55), inset 0 6px 14px rgba(70,100,180,.18), 0 8px 22px rgba(0,0,0,.55);
+    box-shadow:inset 0 -8px 20px rgba(0,0,0,.55), inset 0 6px 14px rgba(70,100,180,.18), 0 0 0 2px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.55);
   }
   #answer-overlay .eight{
     position:absolute;font-family:'Bodoni Moda',serif;font-weight:900;line-height:1;
