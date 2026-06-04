@@ -210,8 +210,8 @@
   }
   #masthead h1 .star{color:#fff8b0;-webkit-text-stroke:3px #ff8a00;display:inline-block;transform:rotate(12deg) scale(1.05);}
   #masthead .kicker{
-    display:inline-block;margin-top:8px;font-family:'Permanent Marker',cursive;
-    font-size:12px;color:#fff;background:var(--hot);padding:4px 12px;border-radius:20px;
+    display:inline-block;margin-top:8px;font-family:'Bodoni Moda',serif;font-style:italic;font-weight:500;
+    font-size:13px;color:#fff;background:var(--hot);padding:4px 12px;border-radius:20px;
     transform:rotate(2deg);box-shadow:0 3px 0 rgba(138,10,79,.4);letter-spacing:.02em;
   }
 
@@ -249,6 +249,26 @@
   #question::placeholder{color:rgba(60,20,10,.45);font-style:italic;}
   #question:focus{outline:none;border-color:var(--mag-red);box-shadow:0 4px 14px rgba(200,34,28,.32);}
 
+  /* B: the post-reveal hint and the input share ONE slot — never stacked.
+     When the hint carries text (wake / reveal / "it has spoken"), the input steps aside. */
+  #ui:has(#hint:not(:empty)) #question{display:none;}
+  /* C: on touch the typed question is pure ritual, so it's opt-in behind a small pill. */
+  #ask-words{display:none;}
+  .ui-pill{
+    pointer-events:auto;cursor:pointer;
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:500;font-size:15px;letter-spacing:.02em;
+    color:var(--hot);background:rgba(255,246,216,.94);
+    border:2px dashed var(--hot);border-radius:999px;padding:7px 16px;
+    box-shadow:0 3px 7px rgba(60,20,10,.25);transition:transform .14s ease;
+  }
+  .ui-pill:active{transform:scale(.94) rotate(-1.5deg);}
+  @media (pointer: coarse){
+    #question{display:none;}             /* hidden by default on touch */
+    body.typing #question{display:block;} /* revealed by the pill */
+    #ask-words{display:inline-flex;}
+    body.typing #ask-words{display:none;}
+  }
+
   /* ===== pasted stickers ===== */
   .sticker{position:fixed;z-index:9;pointer-events:none;font-family:'Permanent Marker',cursive;}
   .badge{
@@ -265,14 +285,14 @@
     box-shadow:0 3px 7px rgba(60,20,10,.35),0 1px 0 rgba(0,0,0,.15);
   }
   @media (max-width:600px){
-    .sticker.rmv{bottom:calc(248px + env(safe-area-inset-bottom));right:4%;}
+    .sticker.rmv{bottom:calc(210px + env(safe-area-inset-bottom));right:4%;}
   }
 
   /* ===== shake hint toast (mobile) ===== */
   .shake-toast{
     position:fixed; left:50%; bottom:calc(195px + env(safe-area-inset-bottom)); z-index:11;
     transform:translateX(-50%); display:none; opacity:0;
-    font-family:'Permanent Marker',cursive; font-size:15px; color:#fff; white-space:nowrap;
+    font-family:'Bodoni Moda',serif; font-style:italic; font-weight:500; font-size:16px; color:#fff; white-space:nowrap;
     background:linear-gradient(180deg,#ff8ec6 0%, var(--hot) 60%, var(--magenta) 100%);
     padding:9px 20px; border-radius:18px; border:2px solid #fff; letter-spacing:.02em;
     box-shadow:0 4px 0 var(--ink), 0 10px 20px rgba(138,10,79,.42); pointer-events:none;
@@ -312,21 +332,34 @@
   #side-link{
     position:fixed;right:0;top:46%;transform:translateY(-50%);z-index:12;
     pointer-events:auto;cursor:pointer;text-decoration:none;
-    font-family:'Permanent Marker',cursive;font-size:13px;letter-spacing:.02em;
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:500;font-size:14px;letter-spacing:.02em;
     color:#fff;background:var(--hot);padding:8px 16px;
     border:2px solid #fff;border-right:0;border-radius:999px 0 0 999px;
     box-shadow:0 3px 0 var(--ink), 0 6px 14px rgba(0,0,0,.3);
     transition:background .4s ease, transform .14s ease;
   }
   #side-link:active{transform:translateY(-50%) scale(.96);}
+  /* Touch side-flip control: a swipe affordance (directional caption, reusing the side-link
+     copy) above a two-dot pager, in-flow at the foot of the UI stack; a horizontal swipe
+     across the ball also flips. Replaces the floating side tab on touch. */
+  #pager{display:none;flex-direction:column;align-items:center;gap:7px;}
+  #swipe-hint{
+    pointer-events:auto;cursor:pointer;border:0;background:none;padding:2px 4px;
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:500;font-size:14px;letter-spacing:.02em;color:#fff;
+    text-shadow:0 2px 4px rgba(0,0,0,.5),0 0 3px rgba(0,0,0,.45);
+    animation:swipe-nudge 1.9s ease-in-out infinite;
+  }
+  .dots{display:flex;gap:11px;align-items:center;}
+  .pdot{
+    pointer-events:auto;cursor:pointer;width:10px;height:10px;padding:0;border-radius:50%;
+    border:2px solid #fff;background:rgba(255,255,255,.4);
+    box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .15s ease,background .3s ease;
+  }
+  .pdot.on{background:var(--hot);transform:scale(1.3);}
+  @keyframes swipe-nudge{0%,100%{transform:translateX(-2px);}50%{transform:translateX(2px);}}
   @media (pointer: coarse){
-    #side-link{
-      position:static;top:auto;right:auto;order:9;z-index:auto;align-self:center;
-      transform:rotate(-1.5deg);
-      background:transparent;color:var(--hot);
-      border:2px dashed #fff;border-radius:999px;box-shadow:none;
-    }
-    #side-link:active{transform:rotate(-1.5deg) scale(.95);}
+    #side-link{display:none;}
+    #pager{display:flex;}
   }
 
 </style>
@@ -381,8 +414,8 @@
   <!-- stickers (decor only) -->
   <div class="sticker badge" style="top:calc(18% + env(safe-area-inset-top));right:6%;transform:rotate(13deg);">100%<br>ACCURATE*</div>
   <div class="sticker tag"   style="top:30%;left:5%;transform:rotate(-9deg);">so kawaii~~</div>
-  <div class="sticker deco"  style="top:62%;right:9%;transform:rotate(8deg);">&#129419;</div>
-  <div class="sticker deco"  style="top:58%;left:7%;transform:rotate(-12deg);">&#128150;</div>
+  <div class="sticker deco"  style="top:14%;left:7%;transform:rotate(-12deg);">&#129419;</div>
+  <div class="sticker deco"  style="top:30%;right:6%;transform:rotate(8deg);">&#128150;</div>
   <div class="sticker rmv">*results may vary</div>
 
   <!-- shake hint (mobile, motion-gated, one-time) -->
@@ -391,9 +424,17 @@
   <div id="ui">
     <a id="side-link" href="#rehab">send his dumbass to rehab &rarr;</a>
     <p id="hint"></p>
+    <button id="ask-words" class="ui-pill" type="button" aria-label="type a question">&#9998; ask in words</button>
     <input id="question" type="text" placeholder="ask the ball..." maxlength="100" autocomplete="off" />
     <button id="shake" class="btn">Ask</button>
     <button id="motion" class="btn">Enable motion</button>
+    <div id="pager" aria-label="which side of the ball">
+      <button id="swipe-hint" type="button"></button>
+      <div class="dots">
+        <button class="pdot" data-href="#home" aria-label="snark side"></button>
+        <button class="pdot" data-href="#rehab" aria-label="rehab side"></button>
+      </div>
+    </div>
   </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -443,14 +484,14 @@ const THEMES = {
     kicker:"send his dumbass to the stratosphere girl &lt;3",
     badge:"100%<br>ACCURATE*", tag:"so kawaii~~", rmv:"*results may vary",
     link:"send his dumbass to rehab &rarr;", linkHref:"#rehab",
-    wake:"consulting my extremely worn thin patience", hint:"it has spoken ♥"
+    wake:"consulting my extremely worn thin patience…", hint:"it has spoken ♥"
   },
   rehab:{
-    title:"EQ-ing my chungus boyfriend magic 8 ball",
+    title:"house-training my chungus boyfriend magic 8 ball",
     kicker:"teaching his dumbass to communicate &lt;3",
     badge:"*put him<br>in his<br>place!", tag:"growth king~~", rmv:"*progress not guaranteed",
     link:"&larr; ugh, lost cause", linkHref:"#home",
-    wake:"buffering emotional intelligence", hint:"character development ♥"
+    wake:"buffering emotional intelligence…", hint:"character development ♥"
   }
 };
 
@@ -603,6 +644,7 @@ function ask(){
   if(state===S.WAKING||state===S.FLIPPING) return;
   dismissShakeToast();
   state=S.WAKING; t0=performance.now(); asked=true;
+  document.body.classList.remove('typing');
   pending=activeAnswers[Math.floor(Math.random()*activeAnswers.length)];
   spin.x=(Math.random()*2-1)*0.5; spin.y=(Math.random()*2-1)*0.5;
   setOverlay('waking');
@@ -610,9 +652,24 @@ function ask(){
   if(navigator.vibrate) navigator.vibrate(30);
 }
 document.getElementById('shake').addEventListener('click',ask);
-renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT')ask();});
+// Tap the ball = ask; a horizontal swipe across it = flip to the other side.
+let _sx=0,_sy=0,_sdown=false;
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.tagName==='INPUT')return;_sdown=true;_sx=e.clientX;_sy=e.clientY;});
+renderer.domElement.addEventListener('pointerup',e=>{if(!_sdown)return;_sdown=false;
+  const dx=e.clientX-_sx,dy=e.clientY-_sy;
+  if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.4){location.hash=modeFromHash()==='rehab'?'#home':'#rehab';}
+  else{ask();}});
 const questionInput=document.getElementById('question');
 questionInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();questionInput.blur();ask();}});
+// C: the mobile "ask in words" pill reveals the otherwise-hidden input (and clears any
+// lingering hint so the slot-share rule lets the field show), then focuses it.
+const askWords=document.getElementById('ask-words');
+askWords.addEventListener('click',()=>{hint.textContent='';document.body.classList.add('typing');questionInput.focus();});
+questionInput.addEventListener('blur',()=>{if(!questionInput.value.trim())document.body.classList.remove('typing');});
+// Tapping a pager dot navigates to that side (hashchange drives the flip).
+document.querySelectorAll('.pdot').forEach(d=>d.addEventListener('click',()=>{location.hash=d.dataset.href;}));
+// the swipe caption is also a tap fallback for the flip.
+document.getElementById('swipe-hint').addEventListener('click',()=>{location.hash=modeFromHash()==='rehab'?'#home':'#rehab';});
 
 // ---- 7b. THEMES + SIDE FLIP (two sides of one ball) --------
 const mastheadH1=document.querySelector('#masthead h1');
@@ -636,6 +693,8 @@ function applyTheme(m){
   sideLink.setAttribute('href',th.linkHref);
   activeAnswers = m==='rehab'?REHAB:ANSWERS;
   currentWake=th.wake; currentHint=th.hint;
+  document.querySelectorAll('.pdot').forEach(d=>d.classList.toggle('on',(d.dataset.href==='#rehab')===(m==='rehab')));
+  document.getElementById('swipe-hint').innerHTML=th.link;   // directional copy = swipe affordance
 }
 // flip the ball to its other side (reuses the wake turn-over; theme swaps at the
 // midpoint, while the window's backface is hidden, so you "land" on the new side)
@@ -675,6 +734,7 @@ function reset(){
   overlayAns.innerHTML='';
   hint.textContent='';
   questionInput.value='';
+  document.body.classList.remove('typing');
 }
 const mb=document.getElementById('motion');
 function becomeResetButton(){
