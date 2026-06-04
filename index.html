@@ -370,7 +370,13 @@
   /* Touch side-flip control: a swipe affordance (directional caption, reusing the side-link
      copy) above a two-dot pager, in-flow at the foot of the UI stack; a horizontal swipe
      across the ball also flips. Replaces the floating side tab on touch. */
-  #pager{display:none;flex-direction:column;align-items:center;gap:7px;}
+  #pager{
+    display:none;flex-direction:column;align-items:center;gap:4px;
+    background:rgba(255,247,234,.6);padding:5px 12px;border-radius:13px;
+    box-shadow:0 2px 10px rgba(60,20,10,.18);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+    transition:opacity .2s ease;
+  }
   #swipe-hint{
     pointer-events:auto;cursor:pointer;border:0;background:none;padding:2px 4px;
     font-family:'Bodoni Moda',serif;font-style:italic;font-weight:900;font-size:14px;letter-spacing:.02em;color:var(--ink);
@@ -380,13 +386,20 @@
   .dots{display:flex;gap:18px;align-items:center;}
   .pdot{
     position:relative;pointer-events:auto;cursor:pointer;width:10px;height:10px;padding:0;border-radius:50%;
-    border:2px solid #fff;background:rgba(255,255,255,.4);
-    box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .15s ease,background .3s ease;
+    border:2px solid var(--ink);background:transparent;
+    transition:transform .15s ease,background .3s ease,border-color .3s ease;
   }
   /* expand the tap target to ~26px without growing the 10px visual dot (WCAG 2.5.8) */
   .pdot::after{content:"";position:absolute;inset:-8px;border-radius:50%;}
-  .pdot.on{background:var(--hot);transform:scale(1.3);}
+  .pdot.on{background:var(--hot);border-color:var(--hot);transform:scale(1.3);}
   @keyframes swipe-nudge{0%,100%{transform:translateX(-2px);}50%{transform:translateX(2px);}}
+
+  /* (a) crossfade the side swap: themed chrome + colour wash dip toward the neutral
+     photo, the swap happens unseen, then everything resolves into the new side. */
+  #masthead, .sticker{ transition:opacity .2s ease; }
+  body::before{ transition:opacity .22s ease; }
+  body.theme-x #masthead, body.theme-x .sticker, body.theme-x #pager{ opacity:0; }
+  body.theme-x::before{ opacity:.2; }
   @media (pointer: coarse){
     #side-link{display:none;}
     #pager{display:flex;}
@@ -744,12 +757,20 @@ function applyTheme(m){
   document.querySelectorAll('.pdot').forEach(d=>d.classList.toggle('on',(d.dataset.href==='#rehab')===(m==='rehab')));
   document.getElementById('swipe-hint').innerHTML=th.link;   // directional copy = swipe affordance
 }
+// (a) apply the theme under a quick crossfade: dip the themed chrome + wash toward the
+// neutral photo, swap while it's faded, then let it resolve into the new side's colours.
+let _xf=0;
+function crossfadeTheme(m){
+  document.body.classList.add('theme-x');
+  setTimeout(()=>applyTheme(m),170);
+  clearTimeout(_xf); _xf=setTimeout(()=>document.body.classList.remove('theme-x'),210);
+}
 // flip the ball to its other side (reuses the wake turn-over; theme swaps at the
 // midpoint, while the window's backface is hidden, so you "land" on the new side)
 function flipSide(targetMode){
   if(targetMode===mode || state===S.WAKING || state===S.FLIPPING) return;
   dismissShakeToast();
-  if(!has3D){ applyTheme(targetMode); setOverlay('idle'); overlayAns.innerHTML=''; hint.textContent=''; return; }
+  if(!has3D){ crossfadeTheme(targetMode); setOverlay('idle'); overlayAns.innerHTML=''; hint.textContent=''; return; }
   pendingMode=targetMode; flipSwapped=false;
   state=S.FLIPPING; t0=performance.now();
   setOverlay('idle'); overlayAns.innerHTML=''; hint.textContent='';
@@ -840,7 +861,7 @@ function loop(now){
     const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
     const rotXdeg = orb.rotation.x * 180 / Math.PI;
     overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
-    if(!flipSwapped && p>=0.5){ flipSwapped=true; applyTheme(pendingMode); }   // backface hidden \u2014 swap unseen
+    if(!flipSwapped && p>=0.5){ flipSwapped=true; crossfadeTheme(pendingMode); }   // backface hidden \u2014 swap unseen
     if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.IDLE;}
   }
   else if(state===S.REVEAL){
