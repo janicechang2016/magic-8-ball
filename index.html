@@ -6,7 +6,7 @@
 <title>my dumbass boyfriend magic 8 ball</title>
 
 <!-- ===== PWA / add-to-home-screen ===== -->
-<meta name="theme-color" content="#ff2f93" />
+<meta name="theme-color" content="#160a16" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -38,11 +38,11 @@
      background across the whole canvas, including the iOS safe areas behind the
      status bar / home indicator — which a position:fixed layer does NOT cover.
      dvh tracks the dynamic viewport; cream stays as a load-failure fallback. */
-  html{background:url('./magazine-inspo.webp') center center / cover no-repeat var(--paper-warm);}
+  html{background:url('./magazine-inspo.webp') center center / cover no-repeat #160a16;}
   html,body{height:100%;height:100dvh;overflow:hidden;}
   body{
     font-family:'Fredoka',system-ui,sans-serif;
-    background:linear-gradient(170deg, var(--paper) 0%, var(--paper-warm) 100%);
+    background:url('./magazine-inspo.webp') center center / cover no-repeat #160a16;
     color:var(--paper-ink);-webkit-tap-highlight-color:transparent;user-select:none;
     position:fixed;inset:0;
   }
@@ -50,8 +50,14 @@
      (100lvh) so the image always fills the screen — even when the iOS toolbar
      collapses the cover overshoots rather than exposing a gap at the bottom. */
   #bg-photo{
-    position:fixed;top:0;left:0;z-index:0;pointer-events:none;
-    width:100vw;height:100vh;height:100lvh;
+    position:fixed;z-index:0;pointer-events:none;
+    /* extend past the safe-area insets so the photo also fills behind the notch /
+       status bar / home indicator — no cream bands top or bottom in standalone */
+    top:calc(-1 * env(safe-area-inset-top));
+    bottom:calc(-1 * env(safe-area-inset-bottom));
+    left:calc(-1 * env(safe-area-inset-left));
+    right:calc(-1 * env(safe-area-inset-right));
+    min-height:100lvh;
     background:url('./magazine-inspo.webp') center center / cover no-repeat;
   }
   /* cream wash + soft vignette, layered ON TOP of the photo to focus the orb */
@@ -351,6 +357,9 @@
                radial-gradient(ellipse 120% 120% at 50% 50%, transparent 50%, rgba(12,30,58,.24) 100%);
   }
   body.rehab #masthead h1{ -webkit-text-stroke-color:#0a2a50; text-shadow:0 3px 0 #0a2a50, 4px 6px 0 rgba(8,20,40,.3); }
+  /* rehab title is longer + wraps to more lines; nudge the kicker down so the rotated
+     last line of the title doesn't clip into it */
+  body.rehab #masthead .kicker{ margin-top:16px; }
   /* rehab cards carry more text — start higher in the (wider) top of the triangle */
   body.rehab #answer-overlay .tri{ padding:8% 5% 0; }
 
