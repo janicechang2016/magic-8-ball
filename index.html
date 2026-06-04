@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>my dumbass boyfriend magic 8 ball</title>
 
 <!-- ===== PWA / add-to-home-screen ===== -->
@@ -62,12 +62,24 @@
                radial-gradient(ellipse 120% 120% at 50% 50%, transparent 50%, rgba(60,40,20,.18) 100%);
   }
   #scene{position:fixed;inset:0;z-index:2;}
+  /* CSS stand-in orb: shows while Three.js loads, and stays as the ball if WebGL/CDN
+     fails (body.no3d). Hidden once the real 3D orb is live (body.has3d). */
+  #orb-fallback{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(46vmin,300px);aspect-ratio:1;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 38% 30%, #3a3a3a 0%, #141414 46%, #050505 100%);
+    box-shadow:inset -10px -14px 30px rgba(0,0,0,.7), inset 8px 10px 22px rgba(255,255,255,.12), 0 18px 40px rgba(0,0,0,.45);
+    animation:orb-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes orb-pulse{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.03);}}
+  body.has3d #orb-fallback{display:none;}
+  body.no3d  #orb-fallback{animation:none;}   /* settled fallback, not a loading pulse */
   canvas{display:block;}
 
   /* ===== answer overlay (white window on the black orb) ===== */
   #answer-overlay{
     position:fixed;left:50%;top:50%;
-    width:clamp(150px,24vmin,240px);height:clamp(150px,24vmin,240px);
+    width:clamp(185px,36vmin,290px);height:clamp(185px,36vmin,290px);
     transform:translate(-50%,-50%);border-radius:50%;
     background:radial-gradient(circle at 50% 32%, #ffffff 0%, #f4ecd6 75%, #d9c89e 100%);
     box-shadow:inset 0 -8px 18px rgba(40,30,15,.35), inset 0 6px 12px rgba(255,255,255,.95), 0 0 0 2px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.45);
@@ -97,7 +109,7 @@
   }
   #answer-overlay .eight{
     position:absolute;font-family:'Bodoni Moda',serif;font-weight:900;line-height:1;
-    font-size:clamp(78px,17vmin,150px);color:#0a0a0a;transition:opacity .35s ease;
+    font-size:clamp(96px,22vmin,180px);color:#0a0a0a;transition:opacity .35s ease;
     transform:translateY(2%);
   }
   #answer-overlay .tri{
@@ -137,7 +149,7 @@
   }
   #answer-overlay .ans{
     position:relative;z-index:2;
-    font-size:calc(clamp(14px,3.2vmin,22px) * var(--ans-scale,1));
+    font-size:calc(clamp(17px,3.9vmin,27px) * var(--ans-scale,1));
     line-height:1.08;text-align:center;
     text-transform:lowercase;letter-spacing:.02em;color:#f5fbff;
     text-shadow:0 0 5px rgba(180,210,255,.75),0 0 11px rgba(140,180,255,.55),0 1px 1px rgba(0,0,0,.45);
@@ -235,7 +247,11 @@
   #shake:active{box-shadow:0 2px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35);}
   /* Mobile (touch): no ASK button — tap the orb or shake the phone instead. */
   @media (pointer: coarse){ #shake{display:none;} }
-  #motion{font-size:13px;padding:8px 20px;display:none;background:#fff6d8;color:var(--magenta);border:2px solid var(--magenta);}
+  /* actionable button (vs. the flat decorative stickers): rounded pill + drop-shadow + icon */
+  #motion{font-size:14px;font-weight:600;padding:9px 20px;display:none;border-radius:999px;
+    background:#fff6d8;color:var(--magenta);border:2px solid var(--magenta);
+    box-shadow:0 3px 0 rgba(138,10,79,.35),0 5px 12px rgba(60,20,10,.22);}
+  #motion:active{box-shadow:0 1px 0 rgba(138,10,79,.35);}
   #question{
     pointer-events:auto;
     font-family:'Bodoni Moda',serif;font-style:italic;font-size:17px;
@@ -248,6 +264,18 @@
   }
   #question::placeholder{color:rgba(60,20,10,.45);font-style:italic;}
   #question:focus{outline:none;border-color:var(--mag-red);box-shadow:0 4px 14px rgba(200,34,28,.32);}
+
+  /* ===== accessibility ===== */
+  /* visible keyboard focus ring (keyboard nav only, via :focus-visible) */
+  #shake:focus-visible, #motion:focus-visible, #ask-words:focus-visible,
+  #side-link:focus-visible, #swipe-hint:focus-visible, .pdot:focus-visible{
+    outline:3px solid var(--ink); outline-offset:3px;
+  }
+  /* visually-hidden text for screen readers (e.g. the input's <label>) */
+  .sr-only{
+    position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
 
   /* B: the post-reveal hint and the input share ONE slot — never stacked.
      When the hint carries text (wake / reveal / "it has spoken"), the input steps aside. */
@@ -349,12 +377,14 @@
     text-shadow:0 1px 2px rgba(255,255,255,.9),0 0 5px rgba(255,255,255,.75);
     animation:swipe-nudge 1.9s ease-in-out infinite;
   }
-  .dots{display:flex;gap:11px;align-items:center;}
+  .dots{display:flex;gap:18px;align-items:center;}
   .pdot{
-    pointer-events:auto;cursor:pointer;width:10px;height:10px;padding:0;border-radius:50%;
+    position:relative;pointer-events:auto;cursor:pointer;width:10px;height:10px;padding:0;border-radius:50%;
     border:2px solid #fff;background:rgba(255,255,255,.4);
     box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .15s ease,background .3s ease;
   }
+  /* expand the tap target to ~26px without growing the 10px visual dot (WCAG 2.5.8) */
+  .pdot::after{content:"";position:absolute;inset:-8px;border-radius:50%;}
   .pdot.on{background:var(--hot);transform:scale(1.3);}
   @keyframes swipe-nudge{0%,100%{transform:translateX(-2px);}50%{transform:translateX(2px);}}
   @media (pointer: coarse){
@@ -403,7 +433,7 @@
     <div class="kicker">send his dumbass to the stratosphere girl &lt;3</div>
   </div>
 
-  <div id="scene"></div>
+  <div id="scene"><div id="orb-fallback" aria-hidden="true"></div></div>
 
   <!-- answer "window" — HTML overlay on top of the orb -->
   <div id="answer-overlay" class="idle" aria-hidden="true">
@@ -424,8 +454,9 @@
   <div id="ui">
     <a id="side-link" href="#rehab">send his dumbass to rehab &rarr;</a>
     <p id="hint"></p>
+    <label for="question" class="sr-only">Type anything — the orb decides the answer</label>
     <button id="ask-words" class="ui-pill" type="button" aria-label="type a question">&#9998; ask in words</button>
-    <input id="question" type="text" placeholder="ask the ball..." maxlength="100" autocomplete="off" />
+    <input id="question" type="text" placeholder="spill it… the orb decides ♥" maxlength="100" autocomplete="off" />
     <button id="shake" class="btn">Ask</button>
     <button id="motion" class="btn">Enable motion</button>
     <div id="pager" aria-label="which side of the ball">
@@ -496,27 +527,38 @@ const THEMES = {
 };
 
 // ---- 2. SCENE ----------------------------------------------
+// All 3D is gated on `has3D`. If Three.js failed to load (CDN blocked) or WebGL is
+// unavailable, we skip the scene and run a timer-driven fallback so the ball still
+// answers — the #orb-fallback CSS sphere stands in for the rendered orb.
 const mount=document.getElementById('scene');
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(38,1,0.1,100); camera.position.set(0,0,4);
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-mount.appendChild(renderer.domElement);
+let scene,camera,renderer,orb,charms,pxPerWorld=1,has3D=false,fbWake=0,fbDone=0;
+try{
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(38,1,0.1,100); camera.position.set(0,0,4);
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  mount.appendChild(renderer.domElement);
+  has3D=true;
+}catch(e){ has3D=false; }
+document.body.classList.add(has3D?'has3d':'no3d');
 
-// ---- 3. LIGHTS (neutral so the black plastic reads classic, with a touch of warmth) ----
-scene.add(new THREE.AmbientLight(0xfff0e0,0.45));
-const key=new THREE.DirectionalLight(0xffffff,1.2); key.position.set(2.5,4,5); scene.add(key);
-const p1=new THREE.PointLight(0xffffff,1.4,20); p1.position.set(-3,3,3); scene.add(p1);   // white gloss pip
-const p2=new THREE.PointLight(0xffe0c8,0.7,20); p2.position.set(3,-2,2); scene.add(p2);    // warm fill
-const p3=new THREE.PointLight(0x3a2030,0.5,20); p3.position.set(0,2,-3); scene.add(p3);    // subtle dark rim
+// ---- 3. LIGHTS + 4. SHELL (only when 3D is available) ------
+if(has3D){
+  // LIGHTS (neutral so the black plastic reads classic, with a touch of warmth)
+  scene.add(new THREE.AmbientLight(0xfff0e0,0.45));
+  const key=new THREE.DirectionalLight(0xffffff,1.2); key.position.set(2.5,4,5); scene.add(key);
+  const p1=new THREE.PointLight(0xffffff,1.4,20); p1.position.set(-3,3,3); scene.add(p1);   // white gloss pip
+  const p2=new THREE.PointLight(0xffe0c8,0.7,20); p2.position.set(3,-2,2); scene.add(p2);    // warm fill
+  const p3=new THREE.PointLight(0x3a2030,0.5,20); p3.position.set(0,2,-3); scene.add(p3);    // subtle dark rim
 
-// ---- 4. SHELL (glossy black plastic, classic 8-ball) -------
-const orb=new THREE.Group(); scene.add(orb);
-orb.add(new THREE.Mesh(
-  new THREE.SphereGeometry(1,72,72),
-  new THREE.MeshPhysicalMaterial({ color:0x0e0e0e, roughness:0.18, metalness:0.0,
-    clearcoat:1.0, clearcoatRoughness:0.05, emissive:0x080808, emissiveIntensity:0.08 })
-));
+  // SHELL (glossy black plastic, classic 8-ball)
+  orb=new THREE.Group(); scene.add(orb);
+  orb.add(new THREE.Mesh(
+    new THREE.SphereGeometry(1,72,72),
+    new THREE.MeshPhysicalMaterial({ color:0x0e0e0e, roughness:0.18, metalness:0.0,
+      clearcoat:1.0, clearcoatRoughness:0.05, emissive:0x080808, emissiveIntensity:0.08 })
+  ));
+}
 
 function canvasTex(size,draw){
   const c=document.createElement('canvas'); c.width=c.height=size;
@@ -610,7 +652,8 @@ function revealPending(){
 }
 
 // ---- 6. FLOATING CHARMS (hearts / stars / sparkles) --------
-const charms=new THREE.Group(); scene.add(charms);
+if(has3D){
+charms=new THREE.Group(); scene.add(charms);
 function shape(kind,color){ return canvasTex(128,(ctx,s)=>{
   ctx.translate(s/2,s/2); ctx.fillStyle=color; ctx.strokeStyle='#fff'; ctx.lineWidth=6; ctx.lineJoin='round';
   const R=s*0.36; ctx.beginPath();
@@ -634,12 +677,12 @@ for(let i=0;i<18;i++){
   const sc=0.16+Math.random()*0.22; sp.scale.set(sc,sc,sc);
   charms.add(sp);
 }
+}  // end if(has3D) charms
 
 // ---- 7. STATE MACHINE --------------------------------------
 const S={IDLE:0,WAKING:1,REVEAL:2,FLIPPING:3}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
 const WAKE_MS=1500, REVEAL_MS=3800; const hint=document.getElementById('hint');
 const REVEAL_BASE_DELAY_MS=360;
-let pxPerWorld=1;
 function ask(){
   if(state===S.WAKING||state===S.FLIPPING) return;
   dismissShakeToast();
@@ -650,12 +693,17 @@ function ask(){
   setOverlay('waking');
   hint.textContent=currentWake;
   if(navigator.vibrate) navigator.vibrate(30);
+  if(!has3D){   // no render loop to advance state — drive the reveal on timers
+    clearTimeout(fbWake); clearTimeout(fbDone);
+    fbWake=setTimeout(()=>{ if(state!==S.WAKING)return; state=S.REVEAL; t0=performance.now(); revealPending(); }, WAKE_MS);
+    fbDone=setTimeout(()=>{ if(state!==S.REVEAL)return; state=S.IDLE; hint.textContent=currentHint; }, WAKE_MS+REVEAL_MS);
+  }
 }
 document.getElementById('shake').addEventListener('click',ask);
 // Tap the ball = ask; a horizontal swipe across it = flip to the other side.
 let _sx=0,_sy=0,_sdown=false;
-renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.tagName==='INPUT')return;_sdown=true;_sx=e.clientX;_sy=e.clientY;});
-renderer.domElement.addEventListener('pointerup',e=>{if(!_sdown)return;_sdown=false;
+mount.addEventListener('pointerdown',e=>{if(e.target.tagName==='INPUT')return;_sdown=true;_sx=e.clientX;_sy=e.clientY;});
+mount.addEventListener('pointerup',e=>{if(!_sdown)return;_sdown=false;
   const dx=e.clientX-_sx,dy=e.clientY-_sy;
   if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.4){location.hash=modeFromHash()==='rehab'?'#home':'#rehab';}
   else{ask();}});
@@ -701,6 +749,7 @@ function applyTheme(m){
 function flipSide(targetMode){
   if(targetMode===mode || state===S.WAKING || state===S.FLIPPING) return;
   dismissShakeToast();
+  if(!has3D){ applyTheme(targetMode); setOverlay('idle'); overlayAns.innerHTML=''; hint.textContent=''; return; }
   pendingMode=targetMode; flipSwapped=false;
   state=S.FLIPPING; t0=performance.now();
   setOverlay('idle'); overlayAns.innerHTML=''; hint.textContent='';
@@ -728,7 +777,8 @@ function dismissShakeToast(){ if(!toastShown||toastDismissed)return; toastDismis
   setTimeout(()=>{shakeToast.style.display='none';},320); }
 function reset(){
   state=S.IDLE; asked=false; pending='';
-  orb.rotation.set(0,0,0); orb.position.set(0,0,0); orb.scale.setScalar(1);
+  clearTimeout(fbWake); clearTimeout(fbDone);
+  if(has3D){ orb.rotation.set(0,0,0); orb.position.set(0,0,0); orb.scale.setScalar(1); }
   overlay.style.transform='';
   setOverlay('idle');
   overlayAns.innerHTML='';
@@ -738,7 +788,7 @@ function reset(){
 }
 const mb=document.getElementById('motion');
 function becomeResetButton(){
-  mb.textContent='Reset'; mb.style.display='block';
+  mb.textContent='↺ ask again'; mb.style.display='block';
   mb.addEventListener('click',reset);
 }
 if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
@@ -804,12 +854,20 @@ function loop(now){
 // ---- 10. RESPONSIVE ----------------------------------------
 function resize(){
   const w=innerWidth,h=innerHeight;renderer.setSize(w,h);
-  camera.aspect=w/h;camera.position.z=h>w?6.2:4.2;
-  camera.updateProjectionMatrix();
+  camera.aspect=w/h;
   const vFov=camera.fov*Math.PI/180;
+  if(h>w){
+    // portrait: the narrow horizontal FOV is the binding axis — push the camera back
+    // far enough that the radius-1 orb is fully contained (no left/right clipping).
+    const margin=1.2;   // ~17% breathing room on the limiting axis
+    camera.position.z = margin / (Math.tan(vFov/2) * camera.aspect);
+  } else {
+    camera.position.z = 4.2;
+  }
+  camera.updateProjectionMatrix();
   pxPerWorld=h/(2*camera.position.z*Math.tan(vFov/2));
 }
-addEventListener('resize',resize); resize(); requestAnimationFrame(loop);
+if(has3D){ addEventListener('resize',resize); resize(); requestAnimationFrame(loop); }
 
 // ---- 11. PWA SERVICE WORKER --------------------------------
 if ('serviceWorker' in navigator) {
