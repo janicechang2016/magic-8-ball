@@ -424,6 +424,17 @@
     #pager{display:flex;}
   }
 
+  /* ===== reduced motion: answers appear without the tumble/blur choreography ===== */
+  @media (prefers-reduced-motion: reduce){
+    #answer-overlay .ans .char{animation:none !important;opacity:1 !important;filter:none !important;}
+    #answer-overlay.answering .tri{animation:none !important;}
+    #orb-fallback{animation:none !important;transform:translate(-50%,-50%) !important;}
+    #swipe-hint{animation:none !important;}
+    .shake-toast.show{animation:none !important;opacity:1;}
+    .shake-toast.hide{animation:none !important;opacity:0;}
+    .shake-toast .hand{animation:none !important;}
+  }
+
 </style>
 </head>
 <body>
@@ -482,6 +493,7 @@
 
   <!-- shake hint (mobile, motion-gated, one-time) -->
   <div id="shake-toast" class="shake-toast" aria-hidden="true">psst &mdash; shake your phone bestie <span class="hand">&#129331;</span></div>
+  <div id="sr-status" class="sr-only" role="status" aria-live="polite"></div>
 
   <div id="ui">
     <a id="side-link" href="#rehab">send his dumbass to rehab &rarr;</a>
@@ -493,11 +505,11 @@
       <button id="ask-words" class="ui-pill" type="button" aria-label="type a question">&#9998; ask in words</button>
       <button id="motion" class="btn">enable motion</button>
     </div>
-    <div id="pager" aria-label="which side of the ball">
+    <div id="pager" role="radiogroup" aria-label="which side of the ball">
       <button id="swipe-hint" type="button"></button>
       <div class="dots">
-        <button class="pdot" data-href="#home" aria-label="snark side"></button>
-        <button class="pdot" data-href="#rehab" aria-label="rehab side"></button>
+        <button class="pdot" role="radio" aria-checked="true" data-href="#home" aria-label="snark side"></button>
+        <button class="pdot" role="radio" aria-checked="false" data-href="#rehab" aria-label="rehab side"></button>
       </div>
     </div>
   </div>
@@ -681,6 +693,8 @@ function fitAnswerToTriangle(){
 }
 // pick the right renderer for whatever `pending` holds (string vs {bad,good})
 function revealPending(){
+  // the styled overlay is aria-hidden; this live region is what screen readers hear
+  srStatus.textContent = (pending && typeof pending==='object') ? pending.good : pending;
   if(pending && typeof pending==='object') showRehabAnswer(pending);
   else showAnswerHTML(pending);
 }
@@ -717,6 +731,10 @@ for(let i=0;i<18;i++){
 const S={IDLE:0,WAKING:1,REVEAL:2,FLIPPING:3}; let state=S.IDLE, t0=0, spin={x:0,y:0}, pending='', asked=false;
 const WAKE_MS=1500, REVEAL_MS=3800; const hint=document.getElementById('hint');
 const REVEAL_BASE_DELAY_MS=360;
+// reduced motion: skip the tumble (short beat instead) — CSS kills the blur/keyframes
+const REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const WAKE_EFF=REDUCED?350:WAKE_MS;
+const srStatus=document.getElementById('sr-status');
 function ask(){
   if(state===S.WAKING||state===S.FLIPPING) return;
   dismissShakeToast();
@@ -729,8 +747,8 @@ function ask(){
   if(navigator.vibrate) navigator.vibrate(30);
   if(!has3D){   // no render loop to advance state — drive the reveal on timers
     clearTimeout(fbWake); clearTimeout(fbDone);
-    fbWake=setTimeout(()=>{ if(state!==S.WAKING)return; state=S.REVEAL; t0=performance.now(); revealPending(); }, WAKE_MS);
-    fbDone=setTimeout(()=>{ if(state!==S.REVEAL)return; state=S.IDLE; hint.textContent=currentHint; }, WAKE_MS+REVEAL_MS);
+    fbWake=setTimeout(()=>{ if(state!==S.WAKING)return; state=S.REVEAL; t0=performance.now(); revealPending(); }, WAKE_EFF);
+    fbDone=setTimeout(()=>{ if(state!==S.REVEAL)return; state=S.IDLE; hint.textContent=currentHint; }, WAKE_EFF+REVEAL_MS);
   }
 }
 document.getElementById('shake').addEventListener('click',ask);
@@ -775,9 +793,15 @@ function applyTheme(m){
   sideLink.setAttribute('href',th.linkHref);
   activeAnswers = m==='rehab'?REHAB:ANSWERS;
   currentWake=th.wake; currentHint=th.hint;
-  document.querySelectorAll('.pdot').forEach(d=>d.classList.toggle('on',(d.dataset.href==='#rehab')===(m==='rehab')));
+  document.querySelectorAll('.pdot').forEach(d=>{
+    const on=(d.dataset.href==='#rehab')===(m==='rehab');
+    d.classList.toggle('on',on); d.setAttribute('aria-checked',on);
+  });
   document.getElementById('swipe-hint').innerHTML=th.link;   // directional copy = swipe affordance
+  if(themeAnnounced) srStatus.textContent = m==='rehab' ? 'flipped to the boyfriend rehab side' : 'flipped to the snark side';
+  themeAnnounced=true;
 }
+let themeAnnounced=false;   // skip the announcement on the initial paint
 // (a) apply the theme under a quick crossfade: dip the themed chrome + wash toward the
 // neutral photo, swap while it's faded, then let it resolve into the new side's colours.
 let _xf=0;
@@ -852,42 +876,48 @@ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermi
 // ---- 9. RENDER LOOP ----------------------------------------
 function loop(now){
   requestAnimationFrame(loop); const t=now*0.001;
-  charms.children.forEach(sp=>{const u=sp.userData;sp.position.y=u.by+Math.sin(t*u.spd+u.ph)*u.amp;sp.material.rotation=Math.sin(t*0.5+u.ph)*0.3;});
+  if(!REDUCED) charms.children.forEach(sp=>{const u=sp.userData;sp.position.y=u.by+Math.sin(t*u.spd+u.ph)*u.amp;sp.material.rotation=Math.sin(t*0.5+u.ph)*0.3;});
 
   if(state===S.IDLE){
-    orb.position.y=Math.sin(t*1.0)*0.04;
-    orb.scale.setScalar(1+Math.sin(t*1.5)*0.018);
+    if(!REDUCED){
+      orb.position.y=Math.sin(t*1.0)*0.04;
+      orb.scale.setScalar(1+Math.sin(t*1.5)*0.018);
+    }
   }
   else if(state===S.WAKING){
-    const p=(now-t0)/WAKE_MS, d=1-p, ts=now*0.001;
-    // turn over: single full X-axis tumble forward, ease-out so it settles
-    const rotP = 1 - Math.pow(1-p, 2.6);
-    orb.rotation.x = -2*Math.PI*rotP;
-    // subtle organic rock so it doesn't read mechanical
-    orb.position.x = Math.sin(ts*7.5 + spin.x*3.14) * 0.045 * d;
-    orb.position.y = Math.cos(ts*6.8 + spin.y*3.14) * 0.055 * d;
-    const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
-    const rotXdeg = orb.rotation.x * 180 / Math.PI;
-    overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
+    const p=(now-t0)/WAKE_EFF, d=1-p, ts=now*0.001;
+    if(!REDUCED){
+      // turn over: single full X-axis tumble forward, ease-out so it settles
+      const rotP = 1 - Math.pow(1-p, 2.6);
+      orb.rotation.x = -2*Math.PI*rotP;
+      // subtle organic rock so it doesn't read mechanical
+      orb.position.x = Math.sin(ts*7.5 + spin.x*3.14) * 0.045 * d;
+      orb.position.y = Math.cos(ts*6.8 + spin.y*3.14) * 0.055 * d;
+      const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
+      const rotXdeg = orb.rotation.x * 180 / Math.PI;
+      overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
+    }
     if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.REVEAL;t0=now;revealPending();}
   }
   else if(state===S.FLIPPING){
     // same turn-over as WAKING, but it swaps the theme at the midpoint and lands
     // back on IDLE (the "8" window) \u2014 no answer reveal.
-    const p=(now-t0)/WAKE_MS, d=1-p, ts=now*0.001;
-    const rotP = 1 - Math.pow(1-p, 2.6);
-    orb.rotation.x = -2*Math.PI*rotP;
-    orb.position.x = Math.sin(ts*7.5) * 0.045 * d;
-    orb.position.y = Math.cos(ts*6.8) * 0.055 * d;
-    const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
-    const rotXdeg = orb.rotation.x * 180 / Math.PI;
-    overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
+    const p=(now-t0)/WAKE_EFF, d=1-p, ts=now*0.001;
+    if(!REDUCED){
+      const rotP = 1 - Math.pow(1-p, 2.6);
+      orb.rotation.x = -2*Math.PI*rotP;
+      orb.position.x = Math.sin(ts*7.5) * 0.045 * d;
+      orb.position.y = Math.cos(ts*6.8) * 0.055 * d;
+      const ox=orb.position.x*pxPerWorld, oy=orb.position.y*pxPerWorld;
+      const rotXdeg = orb.rotation.x * 180 / Math.PI;
+      overlay.style.transform=`translate(calc(-50% + ${ox}px), calc(-50% - ${oy}px)) perspective(700px) rotateX(${rotXdeg}deg)`;
+    }
     if(!flipSwapped && p>=0.5){ flipSwapped=true; crossfadeTheme(pendingMode); }   // backface hidden \u2014 swap unseen
     if(p>=1){orb.rotation.set(0,0,0);orb.position.set(0,0,0);orb.scale.setScalar(1);overlay.style.transform='';state=S.IDLE;}
   }
   else if(state===S.REVEAL){
     const p=Math.min((now-t0)/REVEAL_MS,1);
-    orb.position.y=Math.sin(t*1.0)*0.04;
+    if(!REDUCED) orb.position.y=Math.sin(t*1.0)*0.04;
     if(p>=1){state=S.IDLE; hint.textContent=currentHint;}
   }
   renderer.render(scene,camera);

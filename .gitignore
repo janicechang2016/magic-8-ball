@@ -1,3 +1,7 @@
 .DS_Store
 node_modules/
 .vercel
+
+# Design reference scans — not deployed assets, keep out of the public repo
+magazine-lettering.webp
+8ballinspo.jpeg
